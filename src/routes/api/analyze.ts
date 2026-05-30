@@ -3,7 +3,8 @@ import { z } from "zod";
 
 const BodySchema = z.object({
   kind: z.enum(["url", "image-url"]),
-  value: z.string().min(1).max(2048),
+  // image-url may be a data URL (base64), so allow large payloads
+  value: z.string().min(1).max(12_000_000),
 });
 
 const SYSTEM = `You are a forensic visual design analyzer. Given a screenshot of a website, extract its complete visual DNA.
@@ -24,8 +25,6 @@ function sseEvent(obj: unknown): Uint8Array {
 }
 
 async function fetchMicrolink(url: string): Promise<string> {
-  const api = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
-  // embed=screenshot.url returns the raw image — but we need the URL. Use JSON instead:
   const jsonRes = await fetch(
     `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false`,
     { headers: { Accept: "application/json" } },
@@ -34,7 +33,6 @@ async function fetchMicrolink(url: string): Promise<string> {
   const json = (await jsonRes.json()) as { status: string; data?: { screenshot?: { url?: string } } };
   const shot = json?.data?.screenshot?.url;
   if (!shot) throw new Error("microlink: no screenshot in response");
-  void api;
   return shot;
 }
 
@@ -67,11 +65,16 @@ export const Route = createFileRoute("/api/analyze")({
 
             try {
               let imageUrl = value;
+              let publicShot: string | null = null;
               if (kind === "url") {
                 log(`GET screenshot · microlink.io`);
                 imageUrl = await fetchMicrolink(value);
+                publicShot = imageUrl;
                 log(`screenshot ready · ${imageUrl.slice(0, 48)}…`);
+              } else if (value.startsWith("data:")) {
+                log(`decoded upload · ${(value.length / 1024).toFixed(0)} kB`);
               } else {
+                publicShot = value;
                 log(`using direct image · ${value.slice(0, 48)}…`);
               }
 
@@ -161,7 +164,6 @@ export const Route = createFileRoute("/api/analyze")({
                 }
               }
 
-              // Extract JSON object from the accumulated text
               const start = raw.indexOf("{");
               const end = raw.lastIndexOf("}");
               let profile: unknown = null;
@@ -181,7 +183,7 @@ export const Route = createFileRoute("/api/analyze")({
               }
 
               log(`profile.dna.json ✓ saved`, "done");
-              controller.enqueue(sseEvent({ type: "profile", data: profile, screenshot: imageUrl }));
+              controller.enqueue(sseEvent({ type: "profile", data: profile, screenshot: publicShot }));
               controller.enqueue(sseEvent({ type: "done" }));
               controller.close();
             } catch (err) {

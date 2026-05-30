@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { LogLine } from "@/components/ExtractionLog";
 
-type AnalyzeKind = "url" | "screenshot" | "image-url";
+export type AnalyzeKind = "url" | "screenshot" | "image-url";
 
 export type DnaProfile = {
   mood: string[];
@@ -14,11 +14,25 @@ export type DnaProfile = {
   confidence: number;
 };
 
+export type AnalyzeInput = string | File;
+
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error("Could not read file"));
+    r.readAsDataURL(file);
+  });
+}
+
 export function useAnalyze() {
   const [lines, setLines] = useState<LogLine[]>([]);
   const [live, setLive] = useState(false);
   const [tokens, setTokens] = useState(0);
   const [profile, setProfile] = useState<DnaProfile | null>(null);
+  const [source, setSource] = useState<{ kind: AnalyzeKind; label: string } | null>(null);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -31,27 +45,49 @@ export function useAnalyze() {
     setError(null);
   };
 
-  const analyze = useCallback(async (kind: AnalyzeKind, value: string) => {
-    if (kind === "screenshot") {
-      setError("Direct screenshot upload coming soon — try a URL or image link.");
-      return;
-    }
+  const cancel = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLive(false);
+  }, []);
+
+  const analyze = useCallback(async (kind: AnalyzeKind, value: AnalyzeInput) => {
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     reset();
     setLive(true);
 
+    let payloadKind: "url" | "image-url" = kind === "url" ? "url" : "image-url";
+    let payloadValue: string;
+    let label: string;
+    let localPreview: string | null = null;
+
     try {
+      if (value instanceof File) {
+        if (value.size > MAX_UPLOAD_BYTES) {
+          throw new Error("File too large — max 8 MB.");
+        }
+        payloadValue = await fileToDataUrl(value);
+        localPreview = payloadValue;
+        label = value.name;
+      } else {
+        payloadValue = value.trim();
+        label = payloadValue;
+        if (kind === "image-url") localPreview = payloadValue;
+      }
+      setSource({ kind, label });
+      if (localPreview) setScreenshot(localPreview);
+
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, value }),
+        body: JSON.stringify({ kind: payloadKind, value: payloadValue }),
         signal: ctrl.signal,
       });
       if (!res.ok || !res.body) {
         const t = await res.text().catch(() => "");
-        throw new Error(`analyze failed (${res.status}) ${t.slice(0, 120)}`);
+        throw new Error(`analyze failed (${res.status}) ${t.slice(0, 160)}`);
       }
 
       const reader = res.body.getReader();
@@ -97,5 +133,5 @@ export function useAnalyze() {
     }
   }, []);
 
-  return { analyze, lines, live, tokens, profile, screenshot, error };
+  return { analyze, cancel, lines, live, tokens, profile, screenshot, source, error };
 }
