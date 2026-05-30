@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link as LinkIcon, ImageUp, Image as ImageIcon, Upload, ScanLine, ArrowRight } from "lucide-react";
+import {
+  Link as LinkIcon, ImageUp, Image as ImageIcon, Upload, ScanLine, ArrowRight,
+  Loader2, X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { AnalyzeInput, AnalyzeKind } from "@/lib/useAnalyze";
 
-type Tab = "url" | "screenshot" | "image-url";
+type Tab = AnalyzeKind;
 
 const tabs: { id: Tab; label: string; icon: typeof LinkIcon; hint: string; placeholder: string }[] = [
   { id: "url",         label: "URL",        icon: LinkIcon,  hint: "Paste any public website",     placeholder: "https://linear.app" },
@@ -11,11 +15,38 @@ const tabs: { id: Tab; label: string; icon: typeof LinkIcon; hint: string; place
   { id: "image-url",   label: "Image URL",  icon: ImageIcon, hint: "Direct link to an image file", placeholder: "https://…/cover.png" },
 ];
 
-export function IngestionPanel({ onAnalyze }: { onAnalyze: (kind: Tab, value: string) => void }) {
+const URL_RE = /^https?:\/\/[^\s]+\.[^\s]+/i;
+
+export function IngestionPanel({
+  onAnalyze,
+  onCancel,
+  busy = false,
+}: {
+  onAnalyze: (kind: Tab, value: AnalyzeInput) => void;
+  onCancel?: () => void;
+  busy?: boolean;
+}) {
   const [tab, setTab] = useState<Tab>("url");
   const [value, setValue] = useState("");
+  const [dragging, setDragging] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   const current = tabs.find((t) => t.id === tab)!;
+  const valid =
+    tab === "screenshot" ? !!fileName : URL_RE.test(value.trim());
+
+  const submit = (override?: { kind: Tab; value: AnalyzeInput }) => {
+    if (busy) return;
+    if (override) return onAnalyze(override.kind, override.value);
+    if (!valid) return;
+    onAnalyze(tab, value.trim());
+  };
+
+  const handleFile = (f: File | undefined) => {
+    if (!f) return;
+    setFileName(f.name);
+    onAnalyze("screenshot", f);
+  };
 
   return (
     <div id="ingest" className="glass rounded-2xl p-2 shadow-2xl scroll-mt-24">
@@ -29,10 +60,11 @@ export function IngestionPanel({ onAnalyze }: { onAnalyze: (kind: Tab, value: st
               key={t.id}
               role="tab"
               aria-selected={active}
-              onClick={() => { setTab(t.id); setValue(""); }}
+              disabled={busy}
+              onClick={() => { setTab(t.id); setValue(""); setFileName(null); }}
               className={cn(
-                "relative flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-mono transition-colors",
-                active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                "relative flex-1 inline-flex items-center justify-center gap-2 px-2 sm:px-3 py-2.5 rounded-lg text-sm font-mono transition-colors disabled:opacity-50",
+                active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
               {active && (
@@ -43,19 +75,19 @@ export function IngestionPanel({ onAnalyze }: { onAnalyze: (kind: Tab, value: st
                 />
               )}
               <Icon className="relative size-4" />
-              <span className="relative tracking-tight">{t.label}</span>
+              <span className="relative tracking-tight hidden xs:inline sm:inline">{t.label}</span>
             </button>
           );
         })}
       </div>
 
       {/* Input zone */}
-      <div className="px-5 pt-5 pb-4">
-        <div className="flex items-center justify-between mb-3">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="px-3 sm:px-5 pt-5 pb-4">
+        <div className="flex items-center justify-between mb-3 gap-3">
+          <p className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.18em] text-muted-foreground truncate">
             <span className="text-lime">›</span> {current.hint}
           </p>
-          <span className="font-mono text-[10px] text-muted-foreground">step_01 / ingest</span>
+          <span className="font-mono text-[10px] text-muted-foreground shrink-0">step_01 / ingest</span>
         </div>
 
         <AnimatePresence mode="wait">
@@ -65,23 +97,37 @@ export function IngestionPanel({ onAnalyze }: { onAnalyze: (kind: Tab, value: st
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              className="group relative flex flex-col items-center justify-center gap-3 h-44 rounded-xl border border-dashed border-border bg-ink/30 hover:border-lime/50 hover:bg-lime/[0.03] transition-colors cursor-pointer"
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                handleFile(e.dataTransfer.files?.[0]);
+              }}
+              className={cn(
+                "group relative flex flex-col items-center justify-center gap-3 h-44 rounded-xl border border-dashed bg-ink/30 transition-colors cursor-pointer",
+                dragging
+                  ? "border-lime bg-lime/[0.06]"
+                  : "border-border hover:border-lime/50 hover:bg-lime/[0.03]",
+              )}
             >
               <div className="size-12 rounded-xl bg-surface border border-border grid place-items-center group-hover:border-lime/40">
                 <Upload className="size-5 text-lime" />
               </div>
-              <div className="text-center">
-                <p className="text-sm">Drop a screenshot — or <span className="text-lime underline underline-offset-4">browse</span></p>
+              <div className="text-center px-4">
+                <p className="text-sm">
+                  {fileName
+                    ? <>Uploaded <span className="font-mono text-lime">{fileName}</span></>
+                    : <>Drop a screenshot — or <span className="text-lime underline underline-offset-4">browse</span></>}
+                </p>
                 <p className="font-mono text-[11px] text-muted-foreground mt-1">PNG · JPG · WEBP · up to 8 MB</p>
               </div>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) onAnalyze("screenshot", f.name);
-                }}
+                disabled={busy}
+                className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                onChange={(e) => handleFile(e.target.files?.[0])}
               />
             </motion.label>
           ) : (
@@ -90,27 +136,55 @@ export function IngestionPanel({ onAnalyze }: { onAnalyze: (kind: Tab, value: st
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              className="flex items-stretch gap-2"
+              className="flex flex-col sm:flex-row items-stretch gap-2"
             >
               <div className="flex-1 flex items-center gap-3 px-4 rounded-xl bg-ink/40 border border-border focus-within:border-lime/50 focus-within:bg-ink/60 transition-colors">
-                <current.icon className="size-4 text-muted-foreground" />
+                <current.icon className="size-4 text-muted-foreground shrink-0" />
                 <input
                   id="ingest-input"
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   placeholder={current.placeholder}
-                  className="flex-1 h-12 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/60"
-                  onKeyDown={(e) => { if (e.key === "Enter" && value) onAnalyze(tab, value); }}
+                  inputMode="url"
+                  autoComplete="off"
+                  spellCheck={false}
+                  disabled={busy}
+                  className="flex-1 h-12 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/60 disabled:opacity-60"
+                  onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
                 />
+                {value && !busy && (
+                  <button
+                    type="button"
+                    onClick={() => setValue("")}
+                    aria-label="Clear input"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
               </div>
-              <button
-                onClick={() => value && onAnalyze(tab, value)}
-                className="group inline-flex items-center gap-2 px-5 rounded-xl bg-lime text-primary-foreground font-medium text-sm hover:glow-lime transition-shadow"
-              >
-                <ScanLine className="size-4" />
-                Analyze
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
+              {busy ? (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="group inline-flex items-center justify-center gap-2 h-12 sm:h-auto px-5 rounded-xl border border-border text-foreground font-medium text-sm hover:border-magenta/50 hover:text-magenta transition-colors"
+                >
+                  <Loader2 className="size-4 animate-spin" />
+                  Analyzing…
+                  <X className="size-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => submit()}
+                  disabled={!valid}
+                  className="group inline-flex items-center justify-center gap-2 h-12 sm:h-auto px-5 rounded-xl bg-lime text-primary-foreground font-medium text-sm hover:glow-lime transition-shadow disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                >
+                  <ScanLine className="size-4" />
+                  Analyze
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -121,8 +195,15 @@ export function IngestionPanel({ onAnalyze }: { onAnalyze: (kind: Tab, value: st
           {["linear.app", "vercel.com", "stripe.com", "loom.com"].map((s) => (
             <button
               key={s}
-              onClick={() => { setTab("url"); setValue(`https://${s}`); }}
-              className="font-mono text-[11px] px-2.5 py-1 rounded-md bg-surface border border-border text-muted-foreground hover:text-lime hover:border-lime/40 transition-colors"
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setTab("url");
+                const v = `https://${s}`;
+                setValue(v);
+                submit({ kind: "url", value: v });
+              }}
+              className="font-mono text-[11px] px-2.5 py-1 rounded-md bg-surface border border-border text-muted-foreground hover:text-lime hover:border-lime/40 transition-colors disabled:opacity-50 disabled:hover:text-muted-foreground disabled:hover:border-border"
             >
               {s}
             </button>
