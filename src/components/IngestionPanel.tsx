@@ -95,6 +95,7 @@ export function IngestionPanel({ onAnalyze }: { onAnalyze: (kind: Tab, value: st
               <div className="flex-1 flex items-center gap-3 px-4 rounded-xl bg-ink/40 border border-border focus-within:border-lime/50 focus-within:bg-ink/60 transition-colors">
                 <current.icon className="size-4 text-muted-foreground" />
                 <input
+                  id="ingest-input"
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   placeholder={current.placeholder}
