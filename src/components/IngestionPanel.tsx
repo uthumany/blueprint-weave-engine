@@ -18,7 +18,7 @@ export function IngestionPanel({ onAnalyze }: { onAnalyze: (kind: Tab, value: st
   const current = tabs.find((t) => t.id === tab)!;
 
   return (
-    <div className="glass rounded-2xl p-2 shadow-2xl">
+    <div id="ingest" className="glass rounded-2xl p-2 shadow-2xl scroll-mt-24">
       {/* Tab bar */}
       <div role="tablist" className="flex gap-1 p-1 bg-ink/40 rounded-xl">
         {tabs.map((t) => {
@@ -95,6 +95,7 @@ export function IngestionPanel({ onAnalyze }: { onAnalyze: (kind: Tab, value: st
               <div className="flex-1 flex items-center gap-3 px-4 rounded-xl bg-ink/40 border border-border focus-within:border-lime/50 focus-within:bg-ink/60 transition-colors">
                 <current.icon className="size-4 text-muted-foreground" />
                 <input
+                  id="ingest-input"
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   placeholder={current.placeholder}
