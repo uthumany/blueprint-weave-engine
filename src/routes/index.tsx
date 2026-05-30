@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Scan, FileJson, Wand2, Layers, Component, Download,
-  ArrowRight, Lock, Zap,
+  ArrowRight, Lock, Zap, AlertTriangle,
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { IngestionPanel } from "@/components/IngestionPanel";
 import { ExtractionLog } from "@/components/ExtractionLog";
 import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
+import { useAnalyze } from "@/lib/useAnalyze";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { analyze, lines, live, tokens, error } = useAnalyze();
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background field */}
@@ -80,7 +82,14 @@ function Home() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="mt-8"
             >
-              <IngestionPanel onAnalyze={(k, v) => console.log("[ingest]", k, v)} />
+              <IngestionPanel onAnalyze={analyze} />
+              {error && (
+                <div className="mt-3 flex items-start gap-2 px-3 py-2 rounded-lg border border-magenta/40 bg-magenta/[0.06] font-mono text-[11px] text-magenta">
+                  <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
             </motion.div>
 
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] text-muted-foreground">
@@ -103,7 +112,11 @@ function Home() {
               </div>
             </div>
             <div className="mt-4">
-              <ExtractionLog />
+              <ExtractionLog
+                lines={lines.length > 0 || live ? lines : undefined}
+                live={live}
+                tokenCount={tokens}
+              />
             </div>
           </div>
         </div>
