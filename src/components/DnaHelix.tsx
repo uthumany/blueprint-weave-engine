@@ -8,12 +8,13 @@ export function DnaHelix() {
       <div className="relative h-[420px] w-[180px] animate-helix">
         {rungs.map((_, i) => {
           const t = i / rungs.length;
-          const y = t * 420;
+          const y = (t * 420).toFixed(3);
           const angle = t * 720; // 2 full twists
           const rad = (angle * Math.PI) / 180;
-          const x1 = Math.cos(rad) * 70;
-          const x2 = -x1;
-          const opacity = 0.35 + Math.abs(Math.sin(rad)) * 0.65;
+          const x1 = (Math.cos(rad) * 70).toFixed(3);
+          const x2 = (-Math.cos(rad) * 70).toFixed(3);
+          const opacity = (0.35 + Math.abs(Math.sin(rad)) * 0.65).toFixed(3);
+          const scaleX = (0.3 + Math.abs(Math.cos(rad)) * 0.7).toFixed(3);
           return (
             <div
               key={i}
@@ -22,9 +23,7 @@ export function DnaHelix() {
             >
               <div
                 className="h-px w-[160px] bg-gradient-to-r from-lime/0 via-lime to-magenta/80"
-                style={{
-                  transform: `scaleX(${0.3 + Math.abs(Math.cos(rad)) * 0.7})`,
-                }}
+                style={{ transform: `scaleX(${scaleX})` }}
               />
               <div
                 className="absolute size-2 rounded-full bg-lime glow-lime"
