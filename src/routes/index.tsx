@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Scan, FileJson, Wand2, Layers, Component, Download,
-  ArrowRight, Lock, Zap, AlertTriangle,
+  ArrowRight, Lock, Zap, AlertTriangle, Copy,
 } from "lucide-react";
+import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { IngestionPanel } from "@/components/IngestionPanel";
 import { ExtractionLog } from "@/components/ExtractionLog";
@@ -28,8 +29,64 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+function slugify(s: string) {
+  return s
+    .replace(/^https?:\/\//, "")
+    .replace(/[^a-z0-9]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase()
+    .slice(0, 48) || "profile";
+}
+
 function Home() {
-  const { analyze, lines, live, tokens, error } = useAnalyze();
+  const { analyze, cancel, lines, live, tokens, profile, screenshot, source, error } = useAnalyze();
+
+  const downloadProfile = () => {
+    if (!profile) {
+      toast.error("Analyze a website first to generate a .dna.json.");
+      return;
+    }
+    const name = source?.label ? slugify(source.label) : "profile";
+    const blob = new Blob([JSON.stringify(profile, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${name}.dna.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`Saved ${name}.dna.json`);
+  };
+
+  const copyProfile = () => {
+    if (!profile) {
+      toast.error("Nothing to copy yet — run an analysis.");
+      return;
+    }
+    navigator.clipboard
+      ?.writeText(JSON.stringify(profile, null, 2))
+      .then(() => toast.success("Profile JSON copied to clipboard"))
+      .catch(() => toast.error("Could not copy to clipboard"));
+  };
+
+  const generateFromProfile = () => {
+    if (!profile) {
+      toast.error("Analyze a reference first, then generate.");
+      return;
+    }
+    toast("Generator launching soon", {
+      description: "The compose-from-profile flow ships in the next drop.",
+    });
+  };
+
+  const scrollToIngest = () => {
+    document.getElementById("ingest")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => {
+      (document.getElementById("ingest-input") as HTMLInputElement | null)?.focus({ preventScroll: true });
+    }, 450);
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background field */}
@@ -40,8 +97,8 @@ function Home() {
       <SiteHeader />
 
       {/* HERO */}
-      <section className="relative max-w-7xl mx-auto px-6 pt-16 pb-24">
-        <div className="grid lg:grid-cols-[1.15fr_1fr] gap-12 items-center">
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-20 sm:pb-24">
+        <div className="grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-12 items-center">
           <div>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -57,7 +114,7 @@ function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.05 }}
-              className="font-display text-[clamp(3rem,7vw,6.5rem)] leading-[0.95] tracking-tight mt-6"
+              className="font-display text-[clamp(2.5rem,7vw,6.5rem)] leading-[0.95] tracking-tight mt-6"
             >
               Reverse-engineer<br/>
               the <em className="text-lime text-glow not-italic">visual DNA</em> of<br/>
@@ -82,14 +139,13 @@ function Home() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="mt-8"
             >
-              <IngestionPanel onAnalyze={analyze} />
+              <IngestionPanel onAnalyze={analyze} onCancel={cancel} busy={live} />
               {error && (
                 <div className="mt-3 flex items-start gap-2 px-3 py-2 rounded-lg border border-magenta/40 bg-magenta/[0.06] font-mono text-[11px] text-magenta">
                   <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
-                  <span>{error}</span>
+                  <span className="break-all">{error}</span>
                 </div>
               )}
-
             </motion.div>
 
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] text-muted-foreground">
@@ -100,15 +156,16 @@ function Home() {
           </div>
 
           {/* Right column — helix + extraction log */}
-          <div className="relative">
-            <div className="relative h-[420px] rounded-3xl glass overflow-hidden">
+          <div className="relative order-first lg:order-none">
+            <div className="relative h-[320px] sm:h-[420px] rounded-3xl glass overflow-hidden">
               <div className="absolute inset-0 bg-mesh opacity-60" />
               <div className="absolute top-4 left-4 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                 specimen · web.helix
               </div>
               <DnaHelix />
               <div className="absolute bottom-4 right-4 font-mono text-[10px] text-muted-foreground">
-                <span className="text-lime">●</span> sampling 312 rules
+                <span className={`text-lime ${live ? "animate-pulse-dot inline-block" : ""}`}>●</span>{" "}
+                {live ? "sampling tokens…" : tokens > 0 ? `${tokens.toLocaleString()} chars sampled` : "sampling 312 rules"}
               </div>
             </div>
             <div className="mt-4">
@@ -123,33 +180,35 @@ function Home() {
       </section>
 
       {/* PIPELINE */}
-      <section className="relative max-w-7xl mx-auto px-6 py-20 border-t border-border">
-        <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-border">
+        <div className="flex items-end justify-between mb-10 sm:mb-12 flex-wrap gap-4">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-lime">› the pipeline</p>
-            <h2 className="font-display text-5xl tracking-tight mt-3">From specimen to system to ship.</h2>
+            <h2 className="font-display text-4xl sm:text-5xl tracking-tight mt-3">From specimen to system to ship.</h2>
           </div>
           <p className="max-w-sm text-sm text-muted-foreground">
             Four deterministic stages. Editable at every step. Nothing leaves your browser unless you ask it to.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { n: "01", icon: Scan,      title: "Ingest",   d: "URL · screenshot · image link. Microlink + DOM parse + computed CSS." },
-            { n: "02", icon: Layers,    title: "Analyze",  d: "Claude vision extracts 7 design dimensions into a typed profile." },
-            { n: "03", icon: Component, title: "Compose",  d: "Drop in your content. AI auto-maps copy to slots. Edit anything." },
-            { n: "04", icon: Wand2,     title: "Generate", d: "Single-file HTML streams in. Refine via chat. Export & ship." },
+            { n: "01", icon: Scan,      title: "Ingest",   d: "URL · screenshot · image link. Microlink + DOM parse + computed CSS.", action: scrollToIngest },
+            { n: "02", icon: Layers,    title: "Analyze",  d: "Gemini vision extracts 7 design dimensions into a typed profile.",      action: scrollToIngest },
+            { n: "03", icon: Component, title: "Compose",  d: "Drop in your content. AI auto-maps copy to slots. Edit anything.",     action: generateFromProfile },
+            { n: "04", icon: Wand2,     title: "Generate", d: "Single-file HTML streams in. Refine via chat. Export & ship.",         action: generateFromProfile },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
-              <motion.div
+              <motion.button
                 key={s.n}
+                type="button"
+                onClick={s.action}
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="group relative rounded-2xl glass p-5 hover:border-lime/30 transition-colors"
+                className="group relative text-left rounded-2xl glass p-5 hover:border-lime/30 hover:-translate-y-0.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/50"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs text-muted-foreground">{s.n}</span>
@@ -158,18 +217,18 @@ function Home() {
                 <h3 className="font-display text-2xl mt-8">{s.title}</h3>
                 <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{s.d}</p>
                 <ArrowRight className="absolute bottom-5 right-5 size-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:text-lime transition-all group-hover:translate-x-0.5" />
-              </motion.div>
+              </motion.button>
             );
           })}
         </div>
       </section>
 
       {/* PROFILE SHOWCASE */}
-      <section className="relative max-w-7xl mx-auto px-6 py-20 border-t border-border">
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
+      <section id="profile" className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-border scroll-mt-24">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-start">
           <div className="lg:sticky lg:top-24">
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-lime">› the artifact</p>
-            <h2 className="font-display text-5xl tracking-tight mt-3 leading-[0.95]">
+            <h2 className="font-display text-4xl sm:text-5xl tracking-tight mt-3 leading-[0.95]">
               A design system,<br/>distilled to <em className="text-lime not-italic">JSON</em>.
             </h2>
             <p className="text-muted-foreground mt-5 max-w-md leading-relaxed">
@@ -180,19 +239,36 @@ function Home() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <button className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-lime text-primary-foreground font-medium text-sm hover:glow-lime transition-shadow">
+              <button
+                type="button"
+                onClick={generateFromProfile}
+                className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-lime text-primary-foreground font-medium text-sm hover:glow-lime transition-shadow disabled:opacity-50"
+              >
                 <Wand2 className="size-4" /> Generate from profile
               </button>
-              <button className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border text-sm hover:border-lime/40 transition-colors">
+              <button
+                type="button"
+                onClick={downloadProfile}
+                disabled={!profile}
+                className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border text-sm hover:border-lime/40 transition-colors disabled:opacity-40 disabled:hover:border-border"
+              >
                 <Download className="size-4" /> Download .dna.json
+              </button>
+              <button
+                type="button"
+                onClick={copyProfile}
+                disabled={!profile}
+                className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border text-sm hover:border-lime/40 transition-colors disabled:opacity-40 disabled:hover:border-border"
+              >
+                <Copy className="size-4" /> Copy JSON
               </button>
             </div>
 
             <div className="mt-10 grid grid-cols-2 gap-4 max-w-md">
               {[
                 { k: "dimensions", v: "07" },
-                { k: "tokens / profile", v: "~84" },
-                { k: "avg analysis", v: "8.4s" },
+                { k: "tokens / profile", v: profile ? String(profile.palette.length + profile.spacing.scale.length + 8).padStart(2, "0") : "~84" },
+                { k: "confidence", v: profile ? `${Math.round(profile.confidence * 100)}%` : "—" },
                 { k: "free tier", v: "∞" },
               ].map((s) => (
                 <div key={s.k} className="border-l border-border pl-3">
@@ -203,39 +279,46 @@ function Home() {
             </div>
           </div>
 
-          <ProfilePreview />
+          <ProfilePreview profile={profile} screenshot={screenshot} source={source?.label} />
         </div>
       </section>
 
       {/* CTA */}
-      <section className="relative max-w-7xl mx-auto px-6 py-24">
-        <div className="relative rounded-3xl glass overflow-hidden p-12 md:p-20 text-center">
+      <section id="cta" className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-24 scroll-mt-24">
+        <div className="relative rounded-3xl glass overflow-hidden p-8 sm:p-12 md:p-20 text-center">
           <div className="absolute inset-0 bg-mesh opacity-70" />
           <div className="relative">
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-lime">› step_01 / ingest</p>
-            <h2 className="font-display text-[clamp(2.5rem,5vw,4.5rem)] leading-[1] tracking-tight mt-4 max-w-3xl mx-auto">
+            <h2 className="font-display text-[clamp(2rem,5vw,4.5rem)] leading-[1] tracking-tight mt-4 max-w-3xl mx-auto">
               Stop guessing at someone else's design. <em className="text-lime not-italic">Sequence it.</em>
             </h2>
-            <button className="mt-10 inline-flex items-center gap-2 px-6 h-12 rounded-xl bg-lime text-primary-foreground font-medium hover:glow-lime transition-shadow">
+            <button
+              type="button"
+              onClick={scrollToIngest}
+              className="group mt-10 inline-flex items-center gap-2 px-6 h-12 rounded-xl bg-lime text-primary-foreground font-medium hover:glow-lime transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
               <Scan className="size-4" />
               Analyze a website
-              <ArrowRight className="size-4" />
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer className="relative max-w-7xl mx-auto px-6 py-10 border-t border-border">
+      <footer className="relative max-w-7xl mx-auto px-4 sm:px-6 py-10 border-t border-border">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="font-mono text-[11px] text-muted-foreground">
-            © 2026 Design DNA · built on <a className="text-foreground hover:text-lime" href="https://github.com/zanwei/design-dna">zanwei/design-dna</a>
+            © 2026 Design DNA · built on{" "}
+            <a className="text-foreground hover:text-lime" href="https://github.com/zanwei/design-dna" target="_blank" rel="noreferrer">
+              zanwei/design-dna
+            </a>
           </p>
           <div className="flex gap-5 font-mono text-[11px] text-muted-foreground">
-            <a href="#" className="hover:text-lime">docs</a>
-            <a href="#" className="hover:text-lime">schema</a>
-            <a href="#" className="hover:text-lime">changelog</a>
-            <a href="#" className="hover:text-lime">privacy</a>
+            <a href="https://github.com/zanwei/design-dna#readme" target="_blank" rel="noreferrer" className="hover:text-lime">docs</a>
+            <button type="button" onClick={copyProfile} className="hover:text-lime">schema</button>
+            <a href="https://github.com/zanwei/design-dna/releases" target="_blank" rel="noreferrer" className="hover:text-lime">changelog</a>
+            <a href="https://github.com/zanwei/design-dna/blob/main/LICENSE" target="_blank" rel="noreferrer" className="hover:text-lime">license</a>
           </div>
         </div>
       </footer>
