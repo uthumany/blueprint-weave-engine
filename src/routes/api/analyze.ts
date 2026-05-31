@@ -24,16 +24,37 @@ function sseEvent(obj: unknown): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(obj)}\n\n`);
 }
 
-async function fetchMicrolink(url: string): Promise<string> {
-  const jsonRes = await fetch(
-    `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false`,
-    { headers: { Accept: "application/json" } },
-  );
-  if (!jsonRes.ok) throw new Error(`microlink ${jsonRes.status}`);
-  const json = (await jsonRes.json()) as { status: string; data?: { screenshot?: { url?: string } } };
-  const shot = json?.data?.screenshot?.url;
-  if (!shot) throw new Error("microlink: no screenshot in response");
-  return shot;
+function thumIoFallback(url: string): string {
+  // free, key-less screenshot service used as graceful fallback
+  return `https://image.thum.io/get/width/1280/crop/1600/noanimate/${url}`;
+}
+
+async function fetchScreenshot(
+  url: string,
+  log: (line: string, k?: "ok" | "warn" | "done") => void,
+): Promise<string> {
+  try {
+    const jsonRes = await fetch(
+      `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false`,
+      { headers: { Accept: "application/json" } },
+    );
+    if (jsonRes.ok) {
+      const json = (await jsonRes.json()) as {
+        status: string;
+        data?: { screenshot?: { url?: string } };
+      };
+      const shot = json?.data?.screenshot?.url;
+      if (shot) return shot;
+      log("microlink · empty response, falling back to thum.io", "warn");
+    } else if (jsonRes.status === 429) {
+      log("microlink · rate-limited (429), falling back to thum.io", "warn");
+    } else {
+      log(`microlink · ${jsonRes.status}, falling back to thum.io`, "warn");
+    }
+  } catch (err) {
+    log(`microlink · network error, falling back to thum.io`, "warn");
+  }
+  return thumIoFallback(url);
 }
 
 export const Route = createFileRoute("/api/analyze")({
@@ -68,7 +89,7 @@ export const Route = createFileRoute("/api/analyze")({
               let publicShot: string | null = null;
               if (kind === "url") {
                 log(`GET screenshot · microlink.io`);
-                imageUrl = await fetchMicrolink(value);
+                imageUrl = await fetchScreenshot(value, log);
                 publicShot = imageUrl;
                 log(`screenshot ready · ${imageUrl.slice(0, 48)}…`);
               } else if (value.startsWith("data:")) {
