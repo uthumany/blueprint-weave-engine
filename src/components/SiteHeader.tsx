@@ -1,40 +1,25 @@
 import { FlaskConical, FolderOpen, Wand2, Github, ArrowRight, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
 
-function scrollTo(id: string, focusInput = false) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-  el.animate(
-    [
-      { boxShadow: "0 0 0 0 rgba(190,255,0,0)" },
-      { boxShadow: "0 0 0 6px rgba(190,255,0,0.35)" },
-      { boxShadow: "0 0 0 0 rgba(190,255,0,0)" },
-    ],
-    { duration: 900, easing: "ease-out" },
-  );
-  if (focusInput) {
-    setTimeout(() => {
-      (document.getElementById("ingest-input") as HTMLInputElement | null)?.focus({ preventScroll: true });
-    }, 450);
-  }
-}
+type NavItem = { icon: typeof FlaskConical; label: string; to: string };
+
+const nav: NavItem[] = [
+  { icon: FlaskConical, label: "Analyze",  to: "/" },
+  { icon: FolderOpen,   label: "Profiles", to: "/profiles" },
+  { icon: Wand2,        label: "Generate", to: "/generate" },
+];
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-
-  const nav = [
-    { icon: FlaskConical, label: "Analyze",  target: "ingest"  },
-    { icon: FolderOpen,   label: "Profiles", target: "profile" },
-    { icon: Wand2,        label: "Generate", target: "cta"     },
-  ];
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
     <header className="sticky top-0 z-40">
       <div className="absolute inset-0 backdrop-blur-xl bg-background/60 border-b border-border" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-        <a href="/" className="flex items-center gap-2.5 group shrink-0">
+        <Link to="/" className="flex items-center gap-2.5 group shrink-0">
           <div className="relative size-8 rounded-lg bg-lime grid place-items-center glow-lime">
             <FlaskConical className="size-4 text-primary-foreground" strokeWidth={2.5} />
           </div>
@@ -42,17 +27,16 @@ export function SiteHeader() {
             <p className="font-display text-lg tracking-tight">Design DNA</p>
             <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground mt-0.5 hidden sm:block">v0.1 · forensics</p>
           </div>
-        </a>
+        </Link>
 
         <nav className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-surface/60 border border-border">
-          {nav.map((i, idx) => {
+          {nav.map((i) => {
             const Icon = i.icon;
-            const active = idx === 0;
+            const active = pathname === i.to;
             return (
-              <button
+              <Link
                 key={i.label}
-                type="button"
-                onClick={() => scrollTo(i.target, idx === 0)}
+                to={i.to}
                 className={
                   "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-mono transition-colors " +
                   (active ? "bg-ink text-foreground" : "text-muted-foreground hover:text-foreground")
@@ -60,7 +44,7 @@ export function SiteHeader() {
               >
                 <Icon className="size-3.5" />
                 {i.label}
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -75,18 +59,16 @@ export function SiteHeader() {
             <Github className="size-4" />
             <span className="font-mono text-xs">github</span>
           </a>
-          <motion.button
-            type="button"
-            onClick={() => scrollTo("ingest", true)}
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 500, damping: 28 }}
-            aria-label="Get started — jump to the analyzer"
-            className="group relative inline-flex items-center gap-1.5 px-3 sm:px-4 h-9 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-lime hover:text-primary-foreground hover:glow-lime transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            <span>Get started</span>
-            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-          </motion.button>
+          <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}>
+            <Link
+              to="/get-started"
+              aria-label="Get started"
+              className="group relative inline-flex items-center gap-1.5 px-3 sm:px-4 h-9 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-lime hover:text-primary-foreground hover:glow-lime transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <span>Get started</span>
+              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </motion.div>
           <button
             type="button"
             aria-label="Toggle menu"
@@ -109,20 +91,28 @@ export function SiteHeader() {
             className="md:hidden relative border-b border-border bg-background/90 backdrop-blur-xl"
           >
             <div className="max-w-7xl mx-auto px-4 py-3 grid gap-1">
-              {nav.map((i, idx) => {
+              {nav.map((i) => {
                 const Icon = i.icon;
                 return (
-                  <button
+                  <Link
                     key={i.label}
-                    type="button"
-                    onClick={() => { setOpen(false); scrollTo(i.target, idx === 0); }}
+                    to={i.to}
+                    onClick={() => setOpen(false)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-mono text-muted-foreground hover:text-foreground hover:bg-surface/60 transition-colors"
                   >
                     <Icon className="size-4" />
                     {i.label}
-                  </button>
+                  </Link>
                 );
               })}
+              <Link
+                to="/get-started"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-mono text-lime hover:bg-surface/60 transition-colors"
+              >
+                <ArrowRight className="size-4" />
+                Get started
+              </Link>
               <a
                 href="https://github.com/zanwei/design-dna"
                 target="_blank" rel="noreferrer"
