@@ -170,6 +170,7 @@ function Home() {
               </div>
             </div>
             <div className="mt-4">
+              <AnalysisProgress live={live} phase={phase} elapsedMs={elapsedMs} tokens={tokens} />
               <ExtractionLog
                 lines={lines.length > 0 || live ? lines : undefined}
                 live={live}
