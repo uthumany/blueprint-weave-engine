@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { IngestionPanel } from "@/components/IngestionPanel";
 import { ExtractionLog } from "@/components/ExtractionLog";
+import { AnalysisProgress } from "@/components/AnalysisProgress";
 import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
 import { useAnalyze } from "@/lib/useAnalyze";
@@ -39,7 +40,7 @@ function slugify(s: string) {
 }
 
 function Home() {
-  const { analyze, cancel, lines, live, tokens, profile, screenshot, source, error } = useAnalyze();
+  const { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs } = useAnalyze();
 
   const downloadProfile = () => {
     if (!profile) {
@@ -169,6 +170,7 @@ function Home() {
               </div>
             </div>
             <div className="mt-4">
+              <AnalysisProgress live={live} phase={phase} elapsedMs={elapsedMs} tokens={tokens} />
               <ExtractionLog
                 lines={lines.length > 0 || live ? lines : undefined}
                 live={live}
