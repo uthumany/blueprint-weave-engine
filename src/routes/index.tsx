@@ -40,7 +40,7 @@ function slugify(s: string) {
 }
 
 function Home() {
-  const { analyze, cancel, lines, live, tokens, profile, screenshot, source, error } = useAnalyze();
+  const { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs } = useAnalyze();
 
   const downloadProfile = () => {
     if (!profile) {
