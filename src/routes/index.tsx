@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { IngestionPanel } from "@/components/IngestionPanel";
 import { ExtractionLog } from "@/components/ExtractionLog";
+import { AnalysisProgress } from "@/components/AnalysisProgress";
 import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
 import { useAnalyze } from "@/lib/useAnalyze";
