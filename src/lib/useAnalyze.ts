@@ -118,6 +118,11 @@ export function useAnalyze() {
                 setLines((prev) => [...prev, { t: msg.t, c: msg.c, k: msg.k }]);
               } else if (msg.type === "tokens") {
                 setTokens(msg.n);
+              } else if (msg.type === "phase") {
+                setPhase({ id: msg.id, label: msg.label, pct: msg.pct, elapsed: msg.elapsed });
+                setElapsedMs(msg.elapsed);
+              } else if (msg.type === "tick") {
+                setElapsedMs(msg.elapsed);
               } else if (msg.type === "profile") {
                 setProfile(msg.data as DnaProfile);
                 if (msg.screenshot) setScreenshot(msg.screenshot);
