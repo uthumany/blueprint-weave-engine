@@ -27,6 +27,9 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+export type PhaseId = "capture" | "handoff" | "thinking" | "streaming" | "parsing" | "done";
+export type PhaseState = { id: PhaseId; label: string; pct: number; elapsed: number };
+
 export function useAnalyze() {
   const [lines, setLines] = useState<LogLine[]>([]);
   const [live, setLive] = useState(false);
@@ -35,6 +38,8 @@ export function useAnalyze() {
   const [source, setSource] = useState<{ kind: AnalyzeKind; label: string } | null>(null);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<PhaseState | null>(null);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   const reset = () => {
@@ -43,7 +48,10 @@ export function useAnalyze() {
     setProfile(null);
     setScreenshot(null);
     setError(null);
+    setPhase(null);
+    setElapsedMs(0);
   };
+
 
   const cancel = useCallback(() => {
     abortRef.current?.abort();
