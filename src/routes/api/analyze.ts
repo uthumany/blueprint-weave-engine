@@ -83,8 +83,22 @@ export const Route = createFileRoute("/api/analyze")({
             const ts = () => ((Date.now() - t0) / 1000).toFixed(2).padStart(5, "0");
             const log = (line: string, k: "ok" | "warn" | "done" = "ok") =>
               controller.enqueue(sseEvent({ type: "log", t: ts(), k, c: line }));
+            const phase = (id: string, label: string, pct: number) =>
+              controller.enqueue(sseEvent({ type: "phase", id, label, pct, elapsed: Date.now() - t0 }));
+            const tick = () =>
+              controller.enqueue(sseEvent({ type: "tick", elapsed: Date.now() - t0 }));
+
+            let heartbeat: ReturnType<typeof setInterval> | null = null;
+            const stopHeartbeat = () => {
+              if (heartbeat) { clearInterval(heartbeat); heartbeat = null; }
+            };
+            const startHeartbeat = () => {
+              stopHeartbeat();
+              heartbeat = setInterval(() => { try { tick(); } catch { /* closed */ } }, 500);
+            };
 
             try {
+              phase("capture", "Capturing specimen", 5);
               let imageUrl = value;
               let publicShot: string | null = null;
               if (kind === "url") {
@@ -99,7 +113,11 @@ export const Route = createFileRoute("/api/analyze")({
                 log(`using direct image · ${value.slice(0, 48)}…`);
               }
 
+              phase("handoff", "Handing off to vision model", 20);
               log(`handoff → gemini-2.5-pro (vision)`, "warn");
+
+              phase("thinking", "Model reasoning", 30);
+              startHeartbeat();
 
               const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
                 method: "POST",
@@ -124,6 +142,7 @@ export const Route = createFileRoute("/api/analyze")({
               });
 
               if (!aiRes.ok || !aiRes.body) {
+                stopHeartbeat();
                 if (aiRes.status === 429) {
                   controller.enqueue(sseEvent({ type: "error", message: "Rate limited. Try again shortly." }));
                 } else if (aiRes.status === 402) {
@@ -136,19 +155,18 @@ export const Route = createFileRoute("/api/analyze")({
                 return;
               }
 
-              log(`streaming tokens · parsing model output`);
-
               const reader = aiRes.body.getReader();
               const dec = new TextDecoder();
               let buf = "";
               let raw = "";
               let lastEmit = 0;
+              let streamingStarted = false;
               const milestones = [
-                { at: 120, line: "color system · resolving tokens" },
-                { at: 320, line: "typography · detecting font stack" },
-                { at: 560, line: "spacing scale · inferring base" },
-                { at: 820, line: "effects · shadow + blur signatures" },
-                { at: 1100, line: "motion · ease curves + durations" },
+                { at: 120, line: "color system · resolving tokens", pct: 55 },
+                { at: 320, line: "typography · detecting font stack", pct: 65 },
+                { at: 560, line: "spacing scale · inferring base", pct: 74 },
+                { at: 820, line: "effects · shadow + blur signatures", pct: 82 },
+                { at: 1100, line: "motion · ease curves + durations", pct: 88 },
               ];
               let mIdx = 0;
 
@@ -168,9 +186,16 @@ export const Route = createFileRoute("/api/analyze")({
                     const parsedChunk = JSON.parse(data);
                     const delta = parsedChunk.choices?.[0]?.delta?.content;
                     if (typeof delta === "string") {
+                      if (!streamingStarted) {
+                        streamingStarted = true;
+                        stopHeartbeat();
+                        phase("streaming", "Streaming design tokens", 45);
+                        log(`streaming tokens · parsing model output`);
+                      }
                       raw += delta;
                       while (mIdx < milestones.length && raw.length >= milestones[mIdx].at) {
                         log(milestones[mIdx].line);
+                        phase("streaming", milestones[mIdx].line, milestones[mIdx].pct);
                         mIdx++;
                       }
                       const now = Date.now();
@@ -184,6 +209,9 @@ export const Route = createFileRoute("/api/analyze")({
                   }
                 }
               }
+
+              stopHeartbeat();
+              phase("parsing", "Validating profile", 94);
 
               const start = raw.indexOf("{");
               const end = raw.lastIndexOf("}");
@@ -204,10 +232,12 @@ export const Route = createFileRoute("/api/analyze")({
               }
 
               log(`profile.dna.json ✓ saved`, "done");
+              phase("done", "Profile ready", 100);
               controller.enqueue(sseEvent({ type: "profile", data: profile, screenshot: publicShot }));
               controller.enqueue(sseEvent({ type: "done" }));
               controller.close();
             } catch (err) {
+              stopHeartbeat();
               const message = err instanceof Error ? err.message : "Unknown error";
               controller.enqueue(sseEvent({ type: "log", t: "--.--", k: "warn", c: `error · ${message}` }));
               controller.enqueue(sseEvent({ type: "error", message }));
