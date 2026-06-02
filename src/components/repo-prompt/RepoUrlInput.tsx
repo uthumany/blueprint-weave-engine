@@ -27,8 +27,8 @@ export function RepoUrlInput({ onValidated }: Props) {
         return;
       }
       onValidated({
-        owner: info.owner ?? parsed.owner,
-        repo: info.repo ?? parsed.repo,
+        owner: parsed.owner,
+        repo: parsed.repo,
         branch: parsed.branch || info.default_branch,
       });
     } catch (e) {
