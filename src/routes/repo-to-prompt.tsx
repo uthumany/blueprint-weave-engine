@@ -19,6 +19,7 @@ import {
   type FileEntry,
 } from "@/lib/repo-prompt/aggregate";
 import { getTemplatePrompt, SYSTEM_BLOCK, type TemplateId } from "@/lib/repo-prompt/templates";
+import { useCustomTemplates } from "@/lib/repo-prompt/customTemplates";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/repo-to-prompt")({
@@ -49,9 +50,10 @@ function RepoToPromptPage() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [treeTruncated, setTreeTruncated] = useState(false);
 
-  const [template, setTemplate] = useState<TemplateId>("explain");
+  const [template, setTemplate] = useState<TemplateId>("lovable");
   const [custom, setCustom] = useState("");
   const [maxChars, setMaxChars] = useState(40_000);
+  const { variants } = useCustomTemplates();
 
   const [building, setBuilding] = useState(false);
   const [progress, setProgress] = useState<AggregateProgress | null>(null);
@@ -100,9 +102,13 @@ function RepoToPromptPage() {
       toast.error("Select at least one file");
       return;
     }
-    const templatePrompt = getTemplatePrompt(template, custom);
+    const templatePrompt = getTemplatePrompt(template, custom, variants);
     if (template === "custom" && !templatePrompt) {
       toast.error("Custom instruction is empty");
+      return;
+    }
+    if (template !== "custom" && !templatePrompt) {
+      toast.error("Template is empty");
       return;
     }
 

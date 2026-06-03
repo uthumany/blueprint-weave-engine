@@ -1,4 +1,4 @@
-export type TemplateId =
+export type BuiltinTemplateId =
   | "vibecode"
   | "lovable"
   | "v0"
@@ -8,7 +8,11 @@ export type TemplateId =
   | "refactor"
   | "custom";
 
-export const TEMPLATES: { id: TemplateId; label: string; description: string; prompt: string }[] = [
+// Templates are identified by string IDs. Built-ins use the names above;
+// saved user variants use ids like "var_xxxx" (see customTemplates.ts).
+export type TemplateId = BuiltinTemplateId | (string & {});
+
+export const TEMPLATES: { id: BuiltinTemplateId; label: string; description: string; prompt: string }[] = [
   {
     id: "vibecode",
     label: "Vibecode rebuild (generic)",
@@ -62,7 +66,15 @@ export const TEMPLATES: { id: TemplateId; label: string; description: string; pr
 
 export const SYSTEM_BLOCK = `You will be given the contents of a public GitHub repository, split into files. Each file is preceded by a Markdown header with its path and wrapped in a fenced code block. Use ONLY the provided content as ground truth — do not invent files, functions, or dependencies that are not shown. If important files appear missing or truncated, say so explicitly.`;
 
-export function getTemplatePrompt(id: TemplateId, custom: string): string {
+export function getTemplatePrompt(
+  id: TemplateId,
+  custom: string,
+  variants?: { id: string; prompt: string }[],
+): string {
   if (id === "custom") return custom.trim();
-  return TEMPLATES.find((t) => t.id === id)?.prompt ?? "";
+  const builtin = TEMPLATES.find((t) => t.id === id);
+  if (builtin) return builtin.prompt;
+  const variant = variants?.find((v) => v.id === id);
+  return variant?.prompt ?? "";
 }
+
