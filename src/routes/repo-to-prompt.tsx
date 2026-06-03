@@ -19,6 +19,7 @@ import {
   type FileEntry,
 } from "@/lib/repo-prompt/aggregate";
 import { getTemplatePrompt, SYSTEM_BLOCK, type TemplateId } from "@/lib/repo-prompt/templates";
+import { useCustomTemplates } from "@/lib/repo-prompt/customTemplates";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/repo-to-prompt")({
