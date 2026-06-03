@@ -1,4 +1,4 @@
-export type TemplateId =
+export type BuiltinTemplateId =
   | "vibecode"
   | "lovable"
   | "v0"
@@ -8,7 +8,11 @@ export type TemplateId =
   | "refactor"
   | "custom";
 
-export const TEMPLATES: { id: TemplateId; label: string; description: string; prompt: string }[] = [
+// Templates are identified by string IDs. Built-ins use the names above;
+// saved user variants use ids like "var_xxxx" (see customTemplates.ts).
+export type TemplateId = BuiltinTemplateId | (string & {});
+
+export const TEMPLATES: { id: BuiltinTemplateId; label: string; description: string; prompt: string }[] = [
   {
     id: "vibecode",
     label: "Vibecode rebuild (generic)",
