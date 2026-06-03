@@ -1,8 +1,11 @@
 import { TEMPLATES, type TemplateId } from "@/lib/repo-prompt/templates";
-import { BookOpen, FileText, Wrench, Pencil, Sparkles } from "lucide-react";
+import { BookOpen, FileText, Wrench, Pencil, Sparkles, Heart, Zap, TerminalSquare } from "lucide-react";
 
 const ICONS: Record<TemplateId, typeof BookOpen> = {
   vibecode: Sparkles,
+  lovable: Heart,
+  v0: Zap,
+  cursor: TerminalSquare,
   explain: BookOpen,
   readme: FileText,
   refactor: Wrench,
