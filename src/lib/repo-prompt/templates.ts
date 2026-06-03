@@ -1,4 +1,4 @@
-export type TemplateId = "explain" | "readme" | "refactor" | "custom";
+export type TemplateId = "vibecode" | "explain" | "readme" | "refactor" | "custom";
 
 export const TEMPLATES: { id: TemplateId; label: string; description: string; prompt: string }[] = [
   {
