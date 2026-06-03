@@ -50,9 +50,10 @@ function RepoToPromptPage() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [treeTruncated, setTreeTruncated] = useState(false);
 
-  const [template, setTemplate] = useState<TemplateId>("explain");
+  const [template, setTemplate] = useState<TemplateId>("lovable");
   const [custom, setCustom] = useState("");
   const [maxChars, setMaxChars] = useState(40_000);
+  const { variants } = useCustomTemplates();
 
   const [building, setBuilding] = useState(false);
   const [progress, setProgress] = useState<AggregateProgress | null>(null);
