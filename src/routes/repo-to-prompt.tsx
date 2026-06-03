@@ -102,9 +102,13 @@ function RepoToPromptPage() {
       toast.error("Select at least one file");
       return;
     }
-    const templatePrompt = getTemplatePrompt(template, custom);
+    const templatePrompt = getTemplatePrompt(template, custom, variants);
     if (template === "custom" && !templatePrompt) {
       toast.error("Custom instruction is empty");
+      return;
+    }
+    if (template !== "custom" && !templatePrompt) {
+      toast.error("Template is empty");
       return;
     }
 
