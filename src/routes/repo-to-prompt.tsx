@@ -166,6 +166,20 @@ function RepoToPromptPage() {
   const selectedCount = files.filter((f) => f.selected).length;
   const repoLabel = repo ? `${repo.owner}/${repo.repo}` : "";
 
+  const livePreview = useMemo(() => {
+    if (!repo || selectedCount === 0) return null;
+    const templatePrompt = getTemplatePrompt(template, custom, variants);
+    if (!templatePrompt) return null;
+    return previewPrompt({
+      templatePrompt,
+      systemBlock: SYSTEM_BLOCK,
+      repoLabel: `${repo.owner}/${repo.repo}@${repo.branch}`,
+      files: files.filter((f) => f.selected).map((f) => ({ path: f.path, size: f.size })),
+      maxChars,
+    });
+  }, [repo, files, selectedCount, template, custom, variants, maxChars]);
+
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div className="absolute inset-0 bg-mesh pointer-events-none" />
