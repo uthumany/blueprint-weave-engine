@@ -306,7 +306,7 @@ function RepoToPromptPage() {
             )}
           </AnimatePresence>
 
-          {(output.text || building) && (
+          {output.text || building ? (
             <PromptPreview
               text={output.text}
               chars={output.chars}
@@ -318,7 +318,20 @@ function RepoToPromptPage() {
               progress={progress}
               repoLabel={repoLabel}
             />
-          )}
+          ) : livePreview ? (
+            <PromptPreview
+              text={livePreview.text}
+              chars={livePreview.chars}
+              tokens={livePreview.tokens}
+              included={livePreview.included}
+              totalSelected={selectedCount}
+              truncatedAt={livePreview.truncatedAt}
+              building={false}
+              progress={null}
+              repoLabel={repoLabel}
+              live
+            />
+          ) : null}
         </div>
       </section>
     </div>
