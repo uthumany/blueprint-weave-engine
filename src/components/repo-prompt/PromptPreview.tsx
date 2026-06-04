@@ -25,6 +25,7 @@ export function PromptPreview({
   building,
   progress,
   repoLabel,
+  live = false,
 }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -57,11 +58,44 @@ export function PromptPreview({
   return (
     <div className="rounded-2xl glass p-5 sm:p-6 flex flex-col min-h-[420px]">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-          › prompt · preview
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            › prompt · {live ? "live preview" : "preview"}
+          </p>
+          {live && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-lime/30 bg-lime/5 font-mono text-[9px] uppercase tracking-wider text-lime">
+              <Radio className="size-2.5 animate-pulse" /> live
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <button
+            type="button"
+            onClick={onCopy}
+            disabled={!text || live}
+            title={live ? "Build prompt to enable copy" : undefined}
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-border text-sm hover:border-lime/40 disabled:opacity-40"
+          >
+            {copied ? <Check className="size-3.5 text-lime" /> : <Copy className="size-3.5" />}
+            {copied ? "Copied" : "Copy"}
+          </button>
+          <button
+            type="button"
+            onClick={onDownload}
+            disabled={!text || live}
+            title={live ? "Build prompt to enable download" : undefined}
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-lime hover:text-primary-foreground disabled:opacity-40"
+          >
+            <Download className="size-3.5" /> .md
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-2 flex items-center justify-between gap-3 flex-wrap font-mono text-[11px] text-muted-foreground/80">
+        <span>
+          {live ? "~" : ""}{chars.toLocaleString()} chars · ~{tokens.toLocaleString()} tokens
+          {totalSelected > 0 ? ` · ${included}/${totalSelected} files` : ""}
+        </span>
             type="button"
             onClick={onCopy}
             disabled={!text}
