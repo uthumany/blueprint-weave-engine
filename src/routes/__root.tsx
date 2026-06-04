@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -123,8 +124,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AppErrorBoundary>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </AppErrorBoundary>
       <Toaster />
     </QueryClientProvider>
   );
