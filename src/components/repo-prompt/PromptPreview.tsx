@@ -95,31 +95,10 @@ export function PromptPreview({
         <span>
           {live ? "~" : ""}{chars.toLocaleString()} chars · ~{tokens.toLocaleString()} tokens
           {totalSelected > 0 ? ` · ${included}/${totalSelected} files` : ""}
-        </span>
-            type="button"
-            onClick={onCopy}
-            disabled={!text}
-            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-border text-sm hover:border-lime/40 disabled:opacity-40"
-          >
-            {copied ? <Check className="size-3.5 text-lime" /> : <Copy className="size-3.5" />}
-            {copied ? "Copied" : "Copy"}
-          </button>
-          <button
-            type="button"
-            onClick={onDownload}
-            disabled={!text}
-            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-lime hover:text-primary-foreground disabled:opacity-40"
-          >
-            <Download className="size-3.5" /> .md
-          </button>
-        </div>
+        {truncatedAt && (
+          <span className="text-amber-400/90">truncated at {truncatedAt}</span>
+        )}
       </div>
-
-      <div className="mt-2 flex items-center justify-between gap-3 flex-wrap font-mono text-[11px] text-muted-foreground/80">
-        <span>
-          {chars.toLocaleString()} chars · ~{tokens.toLocaleString()} tokens
-          {totalSelected > 0 ? ` · ${included}/${totalSelected} files` : ""}
-        </span>
         {truncatedAt && (
           <span className="text-amber-400/90">truncated at {truncatedAt}</span>
         )}
