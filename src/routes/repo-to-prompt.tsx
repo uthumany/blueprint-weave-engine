@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Github, Sparkles, Loader2, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SiteHeader } from "@/components/SiteHeader";
 import { RepoUrlInput } from "@/components/repo-prompt/RepoUrlInput";
@@ -15,6 +15,7 @@ import {
   autoSelectSignals,
   fetchFilesBatched,
   filterTree,
+  previewPrompt,
   type AggregateProgress,
   type FileEntry,
 } from "@/lib/repo-prompt/aggregate";
@@ -165,6 +166,20 @@ function RepoToPromptPage() {
   const selectedCount = files.filter((f) => f.selected).length;
   const repoLabel = repo ? `${repo.owner}/${repo.repo}` : "";
 
+  const livePreview = useMemo(() => {
+    if (!repo || selectedCount === 0) return null;
+    const templatePrompt = getTemplatePrompt(template, custom, variants);
+    if (!templatePrompt) return null;
+    return previewPrompt({
+      templatePrompt,
+      systemBlock: SYSTEM_BLOCK,
+      repoLabel: `${repo.owner}/${repo.repo}@${repo.branch}`,
+      files: files.filter((f) => f.selected).map((f) => ({ path: f.path, size: f.size })),
+      maxChars,
+    });
+  }, [repo, files, selectedCount, template, custom, variants, maxChars]);
+
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div className="absolute inset-0 bg-mesh pointer-events-none" />
@@ -291,7 +306,7 @@ function RepoToPromptPage() {
             )}
           </AnimatePresence>
 
-          {(output.text || building) && (
+          {output.text || building ? (
             <PromptPreview
               text={output.text}
               chars={output.chars}
@@ -303,7 +318,20 @@ function RepoToPromptPage() {
               progress={progress}
               repoLabel={repoLabel}
             />
-          )}
+          ) : livePreview ? (
+            <PromptPreview
+              text={livePreview.text}
+              chars={livePreview.chars}
+              tokens={livePreview.tokens}
+              included={livePreview.included}
+              totalSelected={selectedCount}
+              truncatedAt={livePreview.truncatedAt}
+              building={false}
+              progress={null}
+              repoLabel={repoLabel}
+              live
+            />
+          ) : null}
         </div>
       </section>
     </div>
