@@ -95,10 +95,7 @@ export function PromptPreview({
         <span>
           {live ? "~" : ""}{chars.toLocaleString()} chars · ~{tokens.toLocaleString()} tokens
           {totalSelected > 0 ? ` · ${included}/${totalSelected} files` : ""}
-        {truncatedAt && (
-          <span className="text-amber-400/90">truncated at {truncatedAt}</span>
-        )}
-      </div>
+        </span>
         {truncatedAt && (
           <span className="text-amber-400/90">truncated at {truncatedAt}</span>
         )}
