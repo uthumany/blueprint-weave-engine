@@ -171,3 +171,57 @@ export function assemblePrompt(opts: {
     truncatedAt,
   };
 }
+
+// Build a structural preview of the prompt WITHOUT fetching file contents.
+// Each selected file is shown as a placeholder of roughly its byte size so the
+// user gets a faithful char/token estimate and sees how the template wraps the
+// files before paying the GitHub round-trip.
+export function previewPrompt(opts: {
+  templatePrompt: string;
+  systemBlock: string;
+  repoLabel: string;
+  files: { path: string; size: number }[];
+  maxChars: number;
+}): { text: string; chars: number; tokens: number; included: number; truncatedAt?: string } {
+  const header = `${opts.templatePrompt}\n\n---\n\n${opts.systemBlock}\n\nRepository: ${opts.repoLabel}\n\n---\n\n`;
+  let body = "";
+  let included = 0;
+  let truncatedAt: string | undefined;
+
+  for (const f of opts.files) {
+    const lang = langFor(f.path);
+    const sizeLabel = f.size > 0 ? `${f.size.toLocaleString()} bytes` : "content";
+    const placeholder = `[ file contents — ~${sizeLabel} · fetched on Build ]`;
+    const block = `### ${f.path}\n\n\`\`\`${lang}\n${placeholder}\n\`\`\`\n\n`;
+    // Estimated real cost = block scaffolding + actual file size (capped).
+    const scaffold = block.length - placeholder.length;
+    const estimated = scaffold + Math.min(f.size || placeholder.length, 200_000);
+    if (header.length + body.length + estimated > opts.maxChars) {
+      truncatedAt = f.path;
+      body += `_[TRUNCATED — remaining files would exceed ${opts.maxChars.toLocaleString()} chars]_\n`;
+      break;
+    }
+    body += block;
+    included += 1;
+  }
+
+  const text = header + body;
+  // Use estimated total (header + scaffolds + raw sizes) for the char counter,
+  // since the visible placeholders don't reflect real file weight.
+  const estimatedChars =
+    header.length +
+    opts.files
+      .slice(0, included)
+      .reduce((acc, f) => {
+        const lang = langFor(f.path);
+        const scaffold = `### ${f.path}\n\n\`\`\`${lang}\n\n\`\`\`\n\n`.length;
+        return acc + scaffold + Math.min(f.size || 0, 200_000);
+      }, 0);
+  return {
+    text,
+    chars: estimatedChars,
+    tokens: Math.ceil(estimatedChars / 4),
+    included,
+    truncatedAt,
+  };
+}

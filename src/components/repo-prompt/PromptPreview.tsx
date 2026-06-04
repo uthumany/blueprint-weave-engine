@@ -1,4 +1,4 @@
-import { Copy, Download, Check, Loader2 } from "lucide-react";
+import { Copy, Download, Check, Loader2, Radio } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -12,6 +12,7 @@ type Props = {
   building: boolean;
   progress?: { done: number; total: number; current?: string } | null;
   repoLabel: string;
+  live?: boolean;
 };
 
 export function PromptPreview({
