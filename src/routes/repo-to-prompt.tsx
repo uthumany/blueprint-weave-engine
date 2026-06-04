@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Github, Sparkles, Loader2, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SiteHeader } from "@/components/SiteHeader";
 import { RepoUrlInput } from "@/components/repo-prompt/RepoUrlInput";
@@ -15,6 +15,7 @@ import {
   autoSelectSignals,
   fetchFilesBatched,
   filterTree,
+  previewPrompt,
   type AggregateProgress,
   type FileEntry,
 } from "@/lib/repo-prompt/aggregate";
