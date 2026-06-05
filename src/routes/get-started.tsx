@@ -5,9 +5,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 export const Route = createFileRoute("/get-started")({
   head: () => ({
     meta: [
-      { title: "Get started — Design DNA" },
+      { title: "Get started — NOTEPADIFY" },
       { name: "description", content: "Four steps from any reference to a shipped, on-brand UI." },
-      { property: "og:title", content: "Get started — Design DNA" },
+      { property: "og:title", content: "Get started — NOTEPADIFY" },
       { property: "og:description", content: "Ingest → analyze → compose → generate." },
     ],
   }),

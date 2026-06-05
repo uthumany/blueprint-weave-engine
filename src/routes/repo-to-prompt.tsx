@@ -26,13 +26,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/repo-to-prompt")({
   head: () => ({
     meta: [
-      { title: "Repo → Prompt — Design DNA" },
+      { title: "Repo → Prompt — NOTEPADIFY" },
       {
         name: "description",
         content:
           "Turn any public GitHub repository into a structured, copy-ready AI prompt. No login, no backend.",
       },
-      { property: "og:title", content: "Repo → Prompt — Design DNA" },
+      { property: "og:title", content: "Repo → Prompt — NOTEPADIFY" },
       {
         property: "og:description",
         content: "Paste a GitHub URL, pick files, ship a prompt to ChatGPT or Claude.",

@@ -5,9 +5,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 export const Route = createFileRoute("/generate")({
   head: () => ({
     meta: [
-      { title: "Generate — Design DNA" },
+      { title: "Generate — NOTEPADIFY" },
       { name: "description", content: "Compose pixel-faithful UIs from a saved design profile and your own content." },
-      { property: "og:title", content: "Generate — Design DNA" },
+      { property: "og:title", content: "Generate — NOTEPADIFY" },
       { property: "og:description", content: "Profile + content → single-file HTML, streamed by AI." },
     ],
   }),

@@ -25,7 +25,7 @@ export function SiteHeader() {
             <FlaskConical className="size-4 text-primary-foreground" strokeWidth={2.5} />
           </div>
           <div className="leading-none">
-            <p className="font-display text-lg tracking-tight">Design DNA</p>
+            <p className="font-display text-lg tracking-tight">NOTEPADIFY</p>
             <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground mt-0.5 hidden sm:block">v0.1 · forensics</p>
           </div>
         </Link>
