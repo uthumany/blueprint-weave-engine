@@ -89,14 +89,41 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  html { font-family: var(--font-sans); }
+  html {
+    font-family: var(--font-sans);
+    /* Reserve gutter for scrollbar so layout doesn't shift when content grows */
+    scrollbar-gutter: stable;
+    overflow-x: hidden;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
+  /* Thin scrollbar — keeps reserved gutter minimal */
+  html { scrollbar-width: thin; scrollbar-color: oklch(1 0 0 / 0.15) transparent; }
+  ::-webkit-scrollbar { width: 2px; height: 2px; }
+  ::-webkit-scrollbar-thumb { background: oklch(1 0 0 / 0.18); border-radius: 2px; }
+  ::-webkit-scrollbar-track { background: transparent; }
   ::selection { background: var(--lime); color: var(--ink); }
+}
+
+@utility container-page {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+@media (min-width: 640px) {
+  .container-page { padding-inline: 1.5rem; }
+}
+@media (min-width: 1024px) {
+  .container-page { padding-inline: 2rem; }
+}
+@media (min-width: 1440px) {
+  .container-page { padding-inline: 2.5rem; }
 }
 
 @layer utilities {

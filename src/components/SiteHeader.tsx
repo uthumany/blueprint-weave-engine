@@ -19,7 +19,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40">
       <div className="absolute inset-0 backdrop-blur-xl bg-background/60 border-b border-border" />
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <div className="relative container-page h-16 flex items-center justify-between gap-3">
         <Link to="/" className="flex items-center gap-2.5 group shrink-0">
           <div className="relative size-8 rounded-lg bg-lime grid place-items-center glow-lime">
             <FlaskConical className="size-4 text-primary-foreground" strokeWidth={2.5} />
@@ -91,7 +91,7 @@ export function SiteHeader() {
             transition={{ duration: 0.18 }}
             className="md:hidden relative border-b border-border bg-background/90 backdrop-blur-xl"
           >
-            <div className="max-w-7xl mx-auto px-4 py-3 grid gap-1">
+            <div className="container-page py-3 grid gap-1">
               {nav.map((i) => {
                 const Icon = i.icon;
                 return (

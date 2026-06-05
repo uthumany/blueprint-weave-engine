@@ -21,7 +21,7 @@ function ProfilesPage() {
       <div className="absolute inset-0 bg-grid pointer-events-none [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]" />
       <SiteHeader />
 
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-24">
+      <section className="relative container-page pt-12 sm:pt-16 pb-24">
         <Link to="/" className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground hover:text-lime transition-colors">
           <ArrowLeft className="size-3" /> back
         </Link>
