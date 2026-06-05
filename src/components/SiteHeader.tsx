@@ -26,7 +26,7 @@ export function SiteHeader() {
           </div>
           <div className="leading-none">
             <p className="font-display text-lg tracking-tight">NOTEPADIFY</p>
-            <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground mt-0.5 hidden sm:block">v0.1 · forensics</p>
+            <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground mt-0.5 hidden sm:block">Design NotePad</p>
           </div>
         </Link>
 
