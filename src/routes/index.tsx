@@ -16,9 +16,9 @@ import { useAnalyze } from "@/lib/useAnalyze";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Design DNA — Reverse-engineer any website's visual identity" },
+      { title: "NOTEPADIFY — Reverse-engineer any website's visual identity" },
       { name: "description", content: "Point at any URL or screenshot. Extract a complete design profile — colors, type, motion, effects — then generate full UIs from it." },
-      { property: "og:title", content: "Design DNA — Visual Style Analyzer & UI Generator" },
+      { property: "og:title", content: "NOTEPADIFY — Visual Style Analyzer & UI Generator" },
       { property: "og:description", content: "Forensic-grade visual DNA extraction. Reusable design profiles. AI-generated single-file UIs." },
     ],
     links: [
@@ -128,7 +128,7 @@ function Home() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-6 max-w-xl text-base text-muted-foreground leading-relaxed"
             >
-              Point at any website or paste a screenshot. Design DNA extracts the
+              Point at any website or paste a screenshot. NOTEPADIFY extracts the
               complete design system — color, typography, spacing, motion, effects —
               into a portable <span className="font-mono text-foreground">.dna.json</span> profile,
               then generates pixel-faithful UIs from your own content.
@@ -311,7 +311,7 @@ function Home() {
       <footer className="relative container-page py-10 border-t border-border">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="font-mono text-[11px] text-muted-foreground">
-            © 2026 Design DNA · built on{" "}
+            © 2026 NOTEPADIFY · built on{" "}
             <a className="text-foreground hover:text-lime" href="https://github.com/zanwei/design-dna" target="_blank" rel="noreferrer">
               zanwei/design-dna
             </a>
