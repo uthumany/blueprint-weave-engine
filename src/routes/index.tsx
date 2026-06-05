@@ -98,7 +98,7 @@ function Home() {
       <SiteHeader />
 
       {/* HERO */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-20 sm:pb-24">
+      <section className="relative container-page pt-12 sm:pt-16 pb-20 sm:pb-24">
         <div className="grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-12 items-center">
           <div>
             <motion.div
@@ -182,7 +182,7 @@ function Home() {
       </section>
 
       {/* PIPELINE */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-border">
+      <section className="relative container-page py-16 sm:py-20 border-t border-border">
         <div className="flex items-end justify-between mb-10 sm:mb-12 flex-wrap gap-4">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-lime">› the pipeline</p>
@@ -226,7 +226,7 @@ function Home() {
       </section>
 
       {/* PROFILE SHOWCASE */}
-      <section id="profile" className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-border scroll-mt-24">
+      <section id="profile" className="relative container-page py-16 sm:py-20 border-t border-border scroll-mt-24">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-start">
           <div className="lg:sticky lg:top-24">
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-lime">› the artifact</p>
@@ -286,7 +286,7 @@ function Home() {
       </section>
 
       {/* CTA */}
-      <section id="cta" className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-24 scroll-mt-24">
+      <section id="cta" className="relative container-page py-20 sm:py-24 scroll-mt-24">
         <div className="relative rounded-3xl glass overflow-hidden p-8 sm:p-12 md:p-20 text-center">
           <div className="absolute inset-0 bg-mesh opacity-70" />
           <div className="relative">
@@ -308,7 +308,7 @@ function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="relative max-w-7xl mx-auto px-4 sm:px-6 py-10 border-t border-border">
+      <footer className="relative container-page py-10 border-t border-border">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="font-mono text-[11px] text-muted-foreground">
             © 2026 Design DNA · built on{" "}
