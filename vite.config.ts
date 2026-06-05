@@ -17,10 +17,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  // Force-enable nitro and target Vercel's Build Output API (.vercel/output/).
-  // Vercel auto-detects this layout — no vercel.json required.
-  // Lovable's own sandbox/prod build still works because nitro is now explicitly on.
-  nitro: {
-    preset: "vercel",
-  },
+  // When building on Vercel (VERCEL=1 is auto-injected), force-enable nitro
+  // with the Vercel preset so the output goes to `.vercel/output/` (Build Output
+  // API v3, auto-detected — no vercel.json needed). Locally and on Lovable
+  // hosting, leave nitro undefined so Lovable's default behavior takes over.
+  nitro: process.env.VERCEL ? { preset: "vercel" } : undefined,
 });
