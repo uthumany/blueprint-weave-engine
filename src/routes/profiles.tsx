@@ -5,9 +5,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 export const Route = createFileRoute("/profiles")({
   head: () => ({
     meta: [
-      { title: "Profiles — Design DNA" },
+      { title: "Profiles — NOTEPADIFY" },
       { name: "description", content: "Browse and manage your saved .dna.json design profiles." },
-      { property: "og:title", content: "Profiles — Design DNA" },
+      { property: "og:title", content: "Profiles — NOTEPADIFY" },
       { property: "og:description", content: "Saved visual DNA extractions ready to compose with." },
     ],
   }),
