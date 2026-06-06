@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Scan, Layers, Component, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { Icon3D, type Icon3DName } from "@/components/Icon3D";
 
 export const Route = createFileRoute("/get-started")({
   head: () => ({
@@ -14,11 +15,11 @@ export const Route = createFileRoute("/get-started")({
   component: GetStartedPage,
 });
 
-const steps = [
-  { n: "01", icon: Scan,      title: "Ingest a reference", d: "Paste any public URL or drop a screenshot. We capture the specimen." },
-  { n: "02", icon: Layers,    title: "Analyze with vision", d: "Gemini 2.5 Pro extracts color, type, spacing, motion, and effects into a typed profile." },
-  { n: "03", icon: Component, title: "Add your content",   d: "Headlines, sections, copy — AI auto-maps your content into the profile's slots." },
-  { n: "04", icon: Wand2,     title: "Generate & ship",    d: "Single-file HTML streams in. Refine via chat, export, and ship." },
+const steps: { n: string; icon: Icon3DName; title: string; d: string }[] = [
+  { n: "01", icon: "Navigation", title: "Ingest a reference",  d: "Paste any public URL or drop a screenshot. We capture the specimen." },
+  { n: "02", icon: "AlignLeft",  title: "Analyze with vision", d: "Gemini 2.5 Pro extracts color, type, spacing, motion, and effects into a typed profile." },
+  { n: "03", icon: "Heading1",   title: "Add your content",    d: "Headlines, sections, copy — AI auto-maps your content into the profile's slots." },
+  { n: "04", icon: "Wand",       title: "Generate & ship",     d: "Single-file HTML streams in. Refine via chat, export, and ship." },
 ];
 
 function GetStartedPage() {
@@ -42,21 +43,18 @@ function GetStartedPage() {
         </p>
 
         <ol className="mt-12 grid gap-4">
-          {steps.map((s) => {
-            const Icon = s.icon;
-            return (
-              <li key={s.n} className="rounded-2xl glass p-5 sm:p-6 flex items-start gap-5">
-                <div className="font-mono text-xs text-muted-foreground pt-1 w-8 shrink-0">{s.n}</div>
-                <div className="size-10 rounded-lg bg-lime/15 grid place-items-center shrink-0">
-                  <Icon className="size-5 text-lime" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-display text-2xl">{s.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{s.d}</p>
-                </div>
-              </li>
-            );
-          })}
+          {steps.map((s) => (
+            <li key={s.n} className="rounded-2xl glass p-5 sm:p-6 flex items-start gap-5">
+              <div className="font-mono text-xs text-muted-foreground pt-1 w-8 shrink-0">{s.n}</div>
+              <div className="size-12 grid place-items-center shrink-0">
+                <Icon3D name={s.icon} className="size-12" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-display text-2xl">{s.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{s.d}</p>
+              </div>
+            </li>
+          ))}
         </ol>
 
         <div className="mt-12 flex flex-wrap gap-3">
@@ -64,7 +62,7 @@ function GetStartedPage() {
             to="/"
             className="group inline-flex items-center gap-2 px-5 h-12 rounded-xl bg-lime text-primary-foreground font-medium hover:glow-lime transition-shadow"
           >
-            <Scan className="size-4" />
+            <Icon3D name="Navigation" className="size-5" />
             Analyze your first site
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
@@ -72,7 +70,7 @@ function GetStartedPage() {
             to="/generate"
             className="inline-flex items-center gap-2 px-5 h-12 rounded-xl border border-border text-sm hover:border-lime/40 transition-colors"
           >
-            <Wand2 className="size-4" /> Skip to generate
+            <Icon3D name="Wand" className="size-5" /> Skip to generate
           </Link>
         </div>
       </section>
