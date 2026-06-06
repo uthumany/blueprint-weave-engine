@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
-  Scan, FileJson, Wand2, Layers, Component, Download,
+  Scan, FileJson, Wand2, Download,
   ArrowRight, Lock, Zap, AlertTriangle, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { ExtractionLog } from "@/components/ExtractionLog";
 import { AnalysisProgress } from "@/components/AnalysisProgress";
 import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
+import { Icon3D, type Icon3DName } from "@/components/Icon3D";
 import { useAnalyze } from "@/lib/useAnalyze";
 
 export const Route = createFileRoute("/")({
@@ -194,34 +195,31 @@ function Home() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            { n: "01", icon: Scan,      title: "Ingest",   d: "URL · screenshot · image link. Microlink + DOM parse + computed CSS.", action: scrollToIngest },
-            { n: "02", icon: Layers,    title: "Analyze",  d: "Gemini vision extracts 7 design dimensions into a typed profile.",      action: scrollToIngest },
-            { n: "03", icon: Component, title: "Compose",  d: "Drop in your content. AI auto-maps copy to slots. Edit anything.",     action: generateFromProfile },
-            { n: "04", icon: Wand2,     title: "Generate", d: "Single-file HTML streams in. Refine via chat. Export & ship.",         action: generateFromProfile },
-          ].map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <motion.button
-                key={s.n}
-                type="button"
-                onClick={s.action}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="group relative text-left rounded-2xl glass p-5 hover:border-lime/30 hover:-translate-y-0.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/50"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs text-muted-foreground">{s.n}</span>
-                  <Icon className="size-4 text-lime" />
-                </div>
-                <h3 className="font-display text-2xl mt-8">{s.title}</h3>
-                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{s.d}</p>
-                <ArrowRight className="absolute bottom-5 right-5 size-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:text-lime transition-all group-hover:translate-x-0.5" />
-              </motion.button>
-            );
-          })}
+          {([
+            { n: "01", icon: "Navigation" as Icon3DName, title: "Ingest",   d: "URL · screenshot · image link. Microlink + DOM parse + computed CSS.", action: scrollToIngest },
+            { n: "02", icon: "AlignLeft"  as Icon3DName, title: "Analyze",  d: "Gemini vision extracts 7 design dimensions into a typed profile.",      action: scrollToIngest },
+            { n: "03", icon: "Heading1"   as Icon3DName, title: "Compose",  d: "Drop in your content. AI auto-maps copy to slots. Edit anything.",     action: generateFromProfile },
+            { n: "04", icon: "Wand"       as Icon3DName, title: "Generate", d: "Single-file HTML streams in. Refine via chat. Export & ship.",         action: generateFromProfile },
+          ]).map((s, i) => (
+            <motion.button
+              key={s.n}
+              type="button"
+              onClick={s.action}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              className="group relative text-left rounded-2xl glass p-5 hover:border-lime/30 hover:-translate-y-0.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/50"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-muted-foreground">{s.n}</span>
+                <Icon3D name={s.icon} className="size-10" />
+              </div>
+              <h3 className="font-display text-2xl mt-6">{s.title}</h3>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{s.d}</p>
+              <ArrowRight className="absolute bottom-5 right-5 size-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:text-lime transition-all group-hover:translate-x-0.5" />
+            </motion.button>
+          ))}
         </div>
       </section>
 

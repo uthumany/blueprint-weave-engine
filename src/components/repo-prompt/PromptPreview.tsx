@@ -1,4 +1,5 @@
-import { Copy, Download, Check, Loader2, Radio } from "lucide-react";
+import { Download, Loader2, Radio } from "lucide-react";
+import { Icon3D } from "@/components/Icon3D";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -76,7 +77,7 @@ export function PromptPreview({
             title={live ? "Build prompt to enable copy" : undefined}
             className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-border text-sm hover:border-lime/40 disabled:opacity-40"
           >
-            {copied ? <Check className="size-3.5 text-lime" /> : <Copy className="size-3.5" />}
+            {copied ? <Icon3D name="CheckCheck" className="size-4" /> : <Icon3D name="Clipboard" className="size-4" />}
             {copied ? "Copied" : "Copy"}
           </button>
           <button
