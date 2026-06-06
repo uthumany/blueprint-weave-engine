@@ -1,5 +1,6 @@
 import { FlaskConical, FolderOpen, Wand2, Github, ArrowRight, Menu, X, GitBranch } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 
 type NavItem = { icon: typeof FlaskConical; label: string; to: string };

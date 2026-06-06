@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Loader2, Camera, Send, Brain, Sparkles, FileCheck2, CheckCircle2 } from "lucide-react";
+import { Loader2, Camera, Send, Brain, Sparkles, FileCheck2, CheckCircle2 } from "lucide-react";
+import { Icon3d } from "@/components/Icon3d";
 import { cn } from "@/lib/utils";
 import type { PhaseId, PhaseState } from "@/lib/useAnalyze";
 

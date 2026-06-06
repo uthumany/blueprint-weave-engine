@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { ArrowLeft, Wand2, Component, FileJson, Sparkles, Loader2, Download, Copy, Check, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Component, FileJson, Sparkles, Loader2, Download, AlertTriangle } from "lucide-react";
+import { Icon3d } from "@/components/Icon3d";
 import { useState, useRef, useCallback } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ProfilePreview } from "@/components/ProfilePreview";

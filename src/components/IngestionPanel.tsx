@@ -4,6 +4,7 @@ import {
   Link as LinkIcon, ImageUp, Image as ImageIcon, Upload, ScanLine, ArrowRight,
   Loader2, X,
 } from "lucide-react";
+import { Icon3d } from "@/components/Icon3d";
 import { cn } from "@/lib/utils";
 import type { AnalyzeInput, AnalyzeKind } from "@/lib/useAnalyze";
 

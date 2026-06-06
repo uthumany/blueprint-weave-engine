@@ -1,4 +1,5 @@
 import { Palette, Type, LayoutGrid, Layers, Sparkles, Play, Image as ImageIcon } from "lucide-react";
+import { Icon3d } from "@/components/Icon3d";
 import type { DnaProfile } from "@/lib/useAnalyze";
 
 const FALLBACK: DnaProfile = {

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Scan, Layers, Component, Wand2 } from "lucide-react";
+import { Icon3d } from "@/components/Icon3d";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const Route = createFileRoute("/get-started")({

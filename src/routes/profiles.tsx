@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, FolderOpen, FileJson, Plus, Trash2, Copy, Pencil, Check, X, Download, Merge, GitCompare } from "lucide-react";
+import { ArrowLeft, FolderOpen, FileJson, Trash2, X, Download, Merge, GitCompare } from "lucide-react";
+import { Icon3d } from "@/components/Icon3d";
 import { useState, useEffect } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ProfilePreview } from "@/components/ProfilePreview";

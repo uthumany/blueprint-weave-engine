@@ -13,6 +13,7 @@ import { AnalysisProgress } from "@/components/AnalysisProgress";
 import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
 import { useAnalyze } from "@/lib/useAnalyze";
+import { Icon3d } from "@/components/Icon3d";
 import { saveProfile, type SavedProfile } from "@/lib/profileStore";
 
 export const Route = createFileRoute("/")({
