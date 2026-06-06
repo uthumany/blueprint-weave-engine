@@ -72,7 +72,7 @@ function GetStartedPage() {
             to="/generate"
             className="inline-flex items-center gap-2 px-5 h-12 rounded-xl border border-border text-sm hover:border-lime/40 transition-colors"
           >
-            <Wand2 className="size-4" /> Skip to generate
+            <Icon3d name="Wand2" size={18} /> Skip to generate
           </Link>
         </div>
       </section>

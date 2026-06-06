@@ -54,7 +54,7 @@ export function AnalysisProgress({
           {live ? (
             <Loader2 className="size-3.5 text-lime animate-spin shrink-0" />
           ) : (
-            <Check className="size-3.5 text-lime shrink-0" />
+            <Icon3d name="Check" size={15} className="text-lime shrink-0" />
           )}
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground truncate">
             {phase?.label ?? "Preparing"}
@@ -107,7 +107,7 @@ export function AnalysisProgress({
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
                 )}
-                {done ? <Check className="size-3.5" /> : <Icon className="size-3.5" />}
+                {done ? <Icon3d name="Check" size={15} /> : <Icon className="size-3.5" />}
               </div>
               <span
                 className={cn(

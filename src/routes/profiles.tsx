@@ -126,7 +126,7 @@ function ProfilesPage() {
             className="group rounded-2xl glass p-5 hover:border-lime/30 hover:-translate-y-0.5 transition-all flex flex-col items-start min-h-[180px] justify-between"
           >
             <div className="size-10 rounded-lg bg-lime/15 grid place-items-center">
-              <Plus className="size-5 text-lime" />
+              <Icon3d name="Plus" size={22} className="text-lime" />
             </div>
             <div>
               <h3 className="font-display text-2xl">New profile</h3>
@@ -186,7 +186,7 @@ function ProfilesPage() {
                           className="flex-1 bg-surface border border-border rounded px-2 py-1 font-display text-lg text-foreground outline-none"
                         />
                         <button type="submit" className="size-7 rounded-md bg-lime/20 grid place-items-center text-lime hover:bg-lime/30">
-                          <Check className="size-3.5" />
+                          <Icon3d name="Check" size={15} />
                         </button>
                         <button type="button" onClick={() => setRenaming(null)} className="size-7 rounded-md bg-surface border border-border grid place-items-center text-muted-foreground hover:text-foreground">
                           <X className="size-3.5" />
@@ -217,11 +217,11 @@ function ProfilesPage() {
                     <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => { setRenaming(p.id); setRenameVal(p.label); }}
                         className="inline-flex items-center gap-1 px-2 h-7 rounded-md bg-surface border border-border font-mono text-[10px] text-muted-foreground hover:text-foreground">
-                        <Pencil className="size-3" /> rename
+                        <Icon3d name="Pencil" size={14} /> rename
                       </button>
                       <button type="button" onClick={() => doDuplicate(p.id)}
                         className="inline-flex items-center gap-1 px-2 h-7 rounded-md bg-surface border border-border font-mono text-[10px] text-muted-foreground hover:text-foreground">
-                        <Copy className="size-3" /> dup
+                        <Icon3d name="Copy" size={14} /> dup
                       </button>
                       <button type="button" onClick={() => doDownload(p)}
                         className="inline-flex items-center gap-1 px-2 h-7 rounded-md bg-surface border border-border font-mono text-[10px] text-muted-foreground hover:text-foreground">

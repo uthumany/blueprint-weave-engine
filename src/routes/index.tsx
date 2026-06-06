@@ -266,7 +266,7 @@ function Home() {
                 onClick={generateFromProfile}
                 className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-lime text-primary-foreground font-medium text-sm hover:glow-lime transition-shadow disabled:opacity-50"
               >
-                <Wand2 className="size-4" /> Generate from profile
+                <Icon3d name="Wand2" size={18} /> Generate from profile
               </button>
               <button
                 type="button"
@@ -282,7 +282,7 @@ function Home() {
                 disabled={!profile}
                 className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border text-sm hover:border-lime/40 transition-colors disabled:opacity-40 disabled:hover:border-border"
               >
-                <Copy className="size-4" /> Copy JSON
+                <Icon3d name="Copy" size={18} /> Copy JSON
               </button>
             </div>
 

@@ -258,7 +258,7 @@ function GeneratePage() {
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <>
-                    <Wand2 className="size-4" /> Generate page <Sparkles className="size-3.5 opacity-70" />
+                    <Icon3d name="Wand2" size={18} /> Generate page <Sparkles className="size-3.5 opacity-70" />
                   </>
                 )}
                 {generating ? "Generating…" : ""}
@@ -278,7 +278,7 @@ function GeneratePage() {
                     onClick={copyHtml}
                     className="inline-flex items-center gap-1.5 px-3 h-10 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground"
                   >
-                    {copied ? <Check className="size-4 text-lime" /> : <Copy className="size-4" />}
+                    {copied ? <Icon3d name="Check" size={16} className="text-lime" /> : <Icon3d name="Copy" size={16} />}
                     {copied ? "Copied" : "Copy"}
                   </button>
                 </>
