@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
-  Scan, FileJson, Wand2, Layers, Component, Download,
+  Scan, FileJson, Wand2, Download,
   ArrowRight, Lock, Zap, AlertTriangle, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
