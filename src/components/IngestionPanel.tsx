@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AnalyzeInput, AnalyzeKind } from "@/lib/useAnalyze";
+import { FancyChipButton } from "./FancyChipButton";
 
 type Tab = AnalyzeKind;
 
@@ -190,12 +191,15 @@ export function IngestionPanel({
         </AnimatePresence>
 
         {/* example chips */}
-        <div className="flex flex-wrap items-center gap-2 mt-4">
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">try</span>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-6 mt-4 pb-4">
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground self-center">try</span>
           {["linear.app", "vercel.com", "stripe.com", "loom.com"].map((s) => (
-            <button
+            <FancyChipButton
               key={s}
-              type="button"
+              label={s}
+              hoverLabel="ANALYZE"
+              hint1="Hover to preview"
+              hint2="Click to analyze"
               disabled={busy}
               onClick={() => {
                 setTab("url");
@@ -203,10 +207,7 @@ export function IngestionPanel({
                 setValue(v);
                 submit({ kind: "url", value: v });
               }}
-              className="font-mono text-[11px] px-2.5 py-1 rounded-md bg-surface border border-border text-muted-foreground hover:text-lime hover:border-lime/40 transition-colors disabled:opacity-50 disabled:hover:text-muted-foreground disabled:hover:border-border"
-            >
-              {s}
-            </button>
+            />
           ))}
         </div>
       </div>
