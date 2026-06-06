@@ -76,7 +76,7 @@ export function PromptPreview({
             title={live ? "Build prompt to enable copy" : undefined}
             className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-border text-sm hover:border-lime/40 disabled:opacity-40"
           >
-            {copied ? <Icon3d name="Check" size={15} className="text-lime" /> : <Icon3d name="Copy" size={15} />}
+            {copied ? <Check className="size-3.5 text-lime" /> : <Copy className="size-3.5" />}
             {copied ? "Copied" : "Copy"}
           </button>
           <button

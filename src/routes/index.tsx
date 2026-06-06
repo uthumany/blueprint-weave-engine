@@ -5,7 +5,6 @@ import {
   ArrowRight, Lock, Zap, AlertTriangle, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useEffect, useRef } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { IngestionPanel } from "@/components/IngestionPanel";
 import { ExtractionLog } from "@/components/ExtractionLog";
@@ -13,8 +12,6 @@ import { AnalysisProgress } from "@/components/AnalysisProgress";
 import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
 import { useAnalyze } from "@/lib/useAnalyze";
-import { Icon3d } from "@/components/Icon3d";
-import { saveProfile, type SavedProfile } from "@/lib/profileStore";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -63,26 +60,6 @@ function Home() {
     toast.success(`Saved ${name}.dna.json`);
   };
 
-  const savedRef = useRef(false);
-
-  // Auto-save profile to localStorage after analysis completes
-  useEffect(() => {
-    if (profile && source && !live && !savedRef.current) {
-      savedRef.current = true;
-      const saved: SavedProfile = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-        label: source.label,
-        kind: source.kind,
-        analyzedAt: new Date().toISOString(),
-        profile,
-        screenshot: screenshot ?? undefined,
-      };
-      saveProfile(saved);
-      toast.success(`Profile saved · ${source.label}`, { description: "Available in the Profiles library." });
-    }
-    if (!profile) savedRef.current = false;
-  }, [profile, source, live, screenshot]);
-
   const copyProfile = () => {
     if (!profile) {
       toast.error("Nothing to copy yet — run an analysis.");
@@ -99,7 +76,9 @@ function Home() {
       toast.error("Analyze a reference first, then generate.");
       return;
     }
-    window.open(`/generate?profile=${encodeURIComponent(JSON.stringify(profile))}`, "_self");
+    toast("Generator launching soon", {
+      description: "The compose-from-profile flow ships in the next drop.",
+    });
   };
 
   const scrollToIngest = () => {
@@ -267,7 +246,7 @@ function Home() {
                 onClick={generateFromProfile}
                 className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-lime text-primary-foreground font-medium text-sm hover:glow-lime transition-shadow disabled:opacity-50"
               >
-                <Icon3d name="Wand2" size={18} /> Generate from profile
+                <Wand2 className="size-4" /> Generate from profile
               </button>
               <button
                 type="button"
@@ -283,7 +262,7 @@ function Home() {
                 disabled={!profile}
                 className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border text-sm hover:border-lime/40 transition-colors disabled:opacity-40 disabled:hover:border-border"
               >
-                <Icon3d name="Copy" size={18} /> Copy JSON
+                <Copy className="size-4" /> Copy JSON
               </button>
             </div>
 
