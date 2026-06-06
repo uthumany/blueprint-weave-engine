@@ -89,8 +89,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "NOTEPADIFY" },
       { name: "twitter:description", content: "NOTEPADIFY lets you point at any website or paste a screenshot, then instantly extracts its complete visual DNA — colors, typography, spacing, motion, mood." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/d87f21cb-07a3-4361-a4c5-20d77c196aad" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/d87f21cb-07a3-4361-a4c5-20d77c196aad" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/6519059a-157c-4e6c-93e3-78d0dd3e6b46" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/6519059a-157c-4e6c-93e3-78d0dd3e6b46" },
     ],
     links: [
       {
