@@ -5,6 +5,7 @@ import {
   ArrowRight, Lock, Zap, AlertTriangle, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect, useRef } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { IngestionPanel } from "@/components/IngestionPanel";
 import { ExtractionLog } from "@/components/ExtractionLog";
@@ -12,6 +13,7 @@ import { AnalysisProgress } from "@/components/AnalysisProgress";
 import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
 import { useAnalyze } from "@/lib/useAnalyze";
+import { saveProfile, type SavedProfile } from "@/lib/profileStore";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -60,6 +62,26 @@ function Home() {
     toast.success(`Saved ${name}.dna.json`);
   };
 
+  const savedRef = useRef(false);
+
+  // Auto-save profile to localStorage after analysis completes
+  useEffect(() => {
+    if (profile && source && !live && !savedRef.current) {
+      savedRef.current = true;
+      const saved: SavedProfile = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+        label: source.label,
+        kind: source.kind,
+        analyzedAt: new Date().toISOString(),
+        profile,
+        screenshot: screenshot ?? undefined,
+      };
+      saveProfile(saved);
+      toast.success(`Profile saved · ${source.label}`, { description: "Available in the Profiles library." });
+    }
+    if (!profile) savedRef.current = false;
+  }, [profile, source, live, screenshot]);
+
   const copyProfile = () => {
     if (!profile) {
       toast.error("Nothing to copy yet — run an analysis.");
@@ -76,9 +98,7 @@ function Home() {
       toast.error("Analyze a reference first, then generate.");
       return;
     }
-    toast("Generator launching soon", {
-      description: "The compose-from-profile flow ships in the next drop.",
-    });
+    window.open(`/generate?profile=${encodeURIComponent(JSON.stringify(profile))}`, "_self");
   };
 
   const scrollToIngest = () => {

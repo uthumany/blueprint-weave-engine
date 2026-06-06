@@ -14,6 +14,7 @@ import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as GetStartedRouteImport } from './routes/get-started'
 import { Route as GenerateRouteImport } from './routes/generate'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiGenerateRouteImport } from './routes/api/generate'
 import { Route as ApiAnalyzeRouteImport } from './routes/api/analyze'
 
 const RepoToPromptRoute = RepoToPromptRouteImport.update({
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGenerateRoute = ApiGenerateRouteImport.update({
+  id: '/api/generate',
+  path: '/api/generate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAnalyzeRoute = ApiAnalyzeRouteImport.update({
   id: '/api/analyze',
   path: '/api/analyze',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/profiles': typeof ProfilesRoute
   '/repo-to-prompt': typeof RepoToPromptRoute
   '/api/analyze': typeof ApiAnalyzeRoute
+  '/api/generate': typeof ApiGenerateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/profiles': typeof ProfilesRoute
   '/repo-to-prompt': typeof RepoToPromptRoute
   '/api/analyze': typeof ApiAnalyzeRoute
+  '/api/generate': typeof ApiGenerateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/profiles': typeof ProfilesRoute
   '/repo-to-prompt': typeof RepoToPromptRoute
   '/api/analyze': typeof ApiAnalyzeRoute
+  '/api/generate': typeof ApiGenerateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/repo-to-prompt'
     | '/api/analyze'
+    | '/api/generate'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/repo-to-prompt'
     | '/api/analyze'
+    | '/api/generate'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/repo-to-prompt'
     | '/api/analyze'
+    | '/api/generate'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   ProfilesRoute: typeof ProfilesRoute
   RepoToPromptRoute: typeof RepoToPromptRoute
   ApiAnalyzeRoute: typeof ApiAnalyzeRoute
+  ApiGenerateRoute: typeof ApiGenerateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/generate': {
+      id: '/api/generate'
+      path: '/api/generate'
+      fullPath: '/api/generate'
+      preLoaderRoute: typeof ApiGenerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/analyze': {
       id: '/api/analyze'
       path: '/api/analyze'
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfilesRoute: ProfilesRoute,
   RepoToPromptRoute: RepoToPromptRoute,
   ApiAnalyzeRoute: ApiAnalyzeRoute,
+  ApiGenerateRoute: ApiGenerateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
