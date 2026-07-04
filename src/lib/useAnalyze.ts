@@ -92,7 +92,7 @@ export function useAnalyze() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: payloadKind, value: payloadValue }),
+        body: JSON.stringify({ kind: payloadKind, value: payloadValue, peerId }),
         signal: ctrl.signal,
       });
       if (!res.ok || !res.body) {
