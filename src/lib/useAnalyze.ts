@@ -40,6 +40,7 @@ export function useAnalyze() {
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<PhaseState | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [appliedPreferences, setAppliedPreferences] = useState<Record<string, unknown> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const reset = () => {
