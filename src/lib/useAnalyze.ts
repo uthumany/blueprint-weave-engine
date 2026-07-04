@@ -150,5 +150,5 @@ export function useAnalyze() {
     }
   }, []);
 
-  return { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs };
+  return { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs, appliedPreferences };
 }
