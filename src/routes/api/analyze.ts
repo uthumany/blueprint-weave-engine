@@ -5,6 +5,7 @@ const BodySchema = z.object({
   kind: z.enum(["url", "image-url"]),
   // image-url may be a data URL (base64), so allow large payloads
   value: z.string().min(1).max(12_000_000),
+  peerId: z.string().max(120).optional(),
 });
 
 const SYSTEM = `You are a forensic visual design analyzer. Given a screenshot of a website, extract its complete visual DNA.
