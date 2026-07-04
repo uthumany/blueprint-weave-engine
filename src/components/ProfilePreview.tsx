@@ -1,5 +1,7 @@
-import { Palette, Type, LayoutGrid, Layers, Sparkles, Play, Image as ImageIcon } from "lucide-react";
+import { Palette, Type, LayoutGrid, Layers, Sparkles, Play, Image as ImageIcon, ThumbsUp, ThumbsDown } from "lucide-react";
+import { useState } from "react";
 import type { DnaProfile } from "@/lib/useAnalyze";
+import { recordFeedback } from "@/lib/memory/memory.functions";
 
 const FALLBACK: DnaProfile = {
   mood: ["futuristic", "minimal", "dark", "editorial", "precise"],
