@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResearchRouteImport } from './routes/research'
 import { Route as RepoToPromptRouteImport } from './routes/repo-to-prompt'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as GetStartedRouteImport } from './routes/get-started'
@@ -16,6 +17,11 @@ import { Route as GenerateRouteImport } from './routes/generate'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiAnalyzeRouteImport } from './routes/api/analyze'
 
+const ResearchRoute = ResearchRouteImport.update({
+  id: '/research',
+  path: '/research',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RepoToPromptRoute = RepoToPromptRouteImport.update({
   id: '/repo-to-prompt',
   path: '/repo-to-prompt',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/get-started': typeof GetStartedRoute
   '/profiles': typeof ProfilesRoute
   '/repo-to-prompt': typeof RepoToPromptRoute
+  '/research': typeof ResearchRoute
   '/api/analyze': typeof ApiAnalyzeRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/get-started': typeof GetStartedRoute
   '/profiles': typeof ProfilesRoute
   '/repo-to-prompt': typeof RepoToPromptRoute
+  '/research': typeof ResearchRoute
   '/api/analyze': typeof ApiAnalyzeRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/get-started': typeof GetStartedRoute
   '/profiles': typeof ProfilesRoute
   '/repo-to-prompt': typeof RepoToPromptRoute
+  '/research': typeof ResearchRoute
   '/api/analyze': typeof ApiAnalyzeRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/get-started'
     | '/profiles'
     | '/repo-to-prompt'
+    | '/research'
     | '/api/analyze'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/get-started'
     | '/profiles'
     | '/repo-to-prompt'
+    | '/research'
     | '/api/analyze'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/get-started'
     | '/profiles'
     | '/repo-to-prompt'
+    | '/research'
     | '/api/analyze'
   fileRoutesById: FileRoutesById
 }
@@ -105,11 +117,19 @@ export interface RootRouteChildren {
   GetStartedRoute: typeof GetStartedRoute
   ProfilesRoute: typeof ProfilesRoute
   RepoToPromptRoute: typeof RepoToPromptRoute
+  ResearchRoute: typeof ResearchRoute
   ApiAnalyzeRoute: typeof ApiAnalyzeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/research': {
+      id: '/research'
+      path: '/research'
+      fullPath: '/research'
+      preLoaderRoute: typeof ResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/repo-to-prompt': {
       id: '/repo-to-prompt'
       path: '/repo-to-prompt'
@@ -161,8 +181,19 @@ const rootRouteChildren: RootRouteChildren = {
   GetStartedRoute: GetStartedRoute,
   ProfilesRoute: ProfilesRoute,
   RepoToPromptRoute: RepoToPromptRoute,
+  ResearchRoute: ResearchRoute,
   ApiAnalyzeRoute: ApiAnalyzeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
