@@ -130,6 +130,8 @@ export function useAnalyze() {
                 if (msg.screenshot) setScreenshot(msg.screenshot);
               } else if (msg.type === "error") {
                 setError(msg.message);
+              } else if (msg.type === "memory") {
+                setAppliedPreferences(msg.preferences ?? null);
               } else if (msg.type === "done") {
                 setLive(false);
               }
