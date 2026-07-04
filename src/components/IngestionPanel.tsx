@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Link as LinkIcon, ImageUp, Image as ImageIcon, Upload, ScanLine, ArrowRight,
@@ -7,6 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { AnalyzeInput, AnalyzeKind } from "@/lib/useAnalyze";
 import { FancyChipButton } from "./FancyChipButton";
+import { listRecentSources } from "@/lib/memory/memory.functions";
 
 type Tab = AnalyzeKind;
 
