@@ -260,6 +260,20 @@ export const Route = createFileRoute("/api/analyze")({
               log(`profile.dna.json ✓ saved`, "done");
               phase("done", "Profile ready", 100);
               controller.enqueue(sseEvent({ type: "profile", data: profile, screenshot: publicShot }));
+
+              // Fire-and-forget: persist to Honcho memory.
+              if (peerId) {
+                try {
+                  const { addMessages } = await import("@/lib/honcho/honcho.server");
+                  await addMessages("analyze", peerId, [
+                    JSON.stringify({ event: "analysis", source: kind === "url" ? value : "upload", profile, at: new Date().toISOString() }),
+                  ]);
+                  log("memory · stored analysis", "ok");
+                } catch (e) {
+                  log(`memory · store failed (${(e as Error).message.slice(0, 60)})`, "warn");
+                }
+              }
+
               controller.enqueue(sseEvent({ type: "done" }));
               controller.close();
             } catch (err) {
