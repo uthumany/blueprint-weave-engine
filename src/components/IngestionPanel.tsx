@@ -23,15 +23,27 @@ export function IngestionPanel({
   onAnalyze,
   onCancel,
   busy = false,
+  peerId,
 }: {
   onAnalyze: (kind: Tab, value: AnalyzeInput) => void;
   onCancel?: () => void;
   busy?: boolean;
+  peerId?: string;
 }) {
   const [tab, setTab] = useState<Tab>("url");
   const [value, setValue] = useState("");
   const [dragging, setDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [recent, setRecent] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!peerId) return;
+    let cancelled = false;
+    listRecentSources({ data: { peerId, limit: 4 } })
+      .then((r) => { if (!cancelled) setRecent(r.sources ?? []); })
+      .catch(() => { /* silent */ });
+    return () => { cancelled = true; };
+  }, [peerId]);
 
   const current = tabs.find((t) => t.id === tab)!;
   const valid =
