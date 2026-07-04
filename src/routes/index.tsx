@@ -43,7 +43,13 @@ function slugify(s: string) {
 }
 
 function Home() {
-  const { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs } = useAnalyze();
+  const { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs, appliedPreferences } = useAnalyze();
+  const [peerId, setPeerId] = useState<string | undefined>(undefined);
+  useEffect(() => { setPeerId(getAnonPeerId()); }, []);
+  const runAnalyze = useMemo(
+    () => (kind: Parameters<typeof analyze>[0], value: Parameters<typeof analyze>[1]) => analyze(kind, value, peerId),
+    [analyze, peerId],
+  );
 
   const downloadProfile = () => {
     if (!profile) {
