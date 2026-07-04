@@ -292,7 +292,7 @@ function Home() {
             </div>
           </div>
 
-          <ProfilePreview profile={profile} screenshot={screenshot} source={source?.label} />
+          <ProfilePreview profile={profile} screenshot={screenshot} source={source?.label} peerId={peerId} />
         </div>
       </section>
 
