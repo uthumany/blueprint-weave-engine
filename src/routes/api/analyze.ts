@@ -117,6 +117,31 @@ export const Route = createFileRoute("/api/analyze")({
               phase("handoff", "Handing off to vision model", 20);
               log(`handoff → gemini-2.5-pro (vision)`, "warn");
 
+              // Optional: pull learned preferences from Honcho and bias the prompt.
+              let systemMsg = SYSTEM;
+              let appliedPrefs: unknown = null;
+              if (peerId) {
+                try {
+                  const { dialecticChat, upsertPeer } = await import("@/lib/honcho/honcho.server");
+                  await upsertPeer(peerId);
+                  const q = `Based on this user's past design-DNA analyses and feedback, return ONLY a JSON object like {"moods":string[],"palettes":string[],"typography":string[],"sources":string[],"summary":string}. <=6 items per array. Empty if unknown.`;
+                  const raw = await dialecticChat(peerId, q);
+                  if (raw) {
+                    const s = raw.indexOf("{"); const e = raw.lastIndexOf("}");
+                    if (s !== -1 && e > s) {
+                      try { appliedPrefs = JSON.parse(raw.slice(s, e + 1)); } catch { /* noop */ }
+                    }
+                  }
+                  if (appliedPrefs) {
+                    log("memory · applying learned preferences", "ok");
+                    systemMsg = `${SYSTEM}\n\nUSER PREFERENCE PRIOR (do not fabricate to fit): ${JSON.stringify(appliedPrefs).slice(0, 1200)}`;
+                    controller.enqueue(sseEvent({ type: "memory", preferences: appliedPrefs }));
+                  }
+                } catch (e) {
+                  log(`memory · unavailable (${(e as Error).message.slice(0, 80)})`, "warn");
+                }
+              }
+
               phase("thinking", "Model reasoning", 30);
               startHeartbeat();
 
@@ -130,7 +155,7 @@ export const Route = createFileRoute("/api/analyze")({
                   model: "google/gemini-2.5-pro",
                   stream: true,
                   messages: [
-                    { role: "system", content: SYSTEM },
+                    { role: "system", content: systemMsg },
                     {
                       role: "user",
                       content: [
