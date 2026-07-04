@@ -7,7 +7,8 @@ function key(): string | null {
   return process.env.CONTEXT_DEV_API_KEY ?? null;
 }
 
-export type CtxResult<T> =
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CtxResult<T = any> =
   | { ok: true; data: T }
   | { ok: false; error: string; status?: number };
 
