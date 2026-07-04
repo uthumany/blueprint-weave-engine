@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Link as LinkIcon, ImageUp, Image as ImageIcon, Upload, ScanLine, ArrowRight,
@@ -7,6 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { AnalyzeInput, AnalyzeKind } from "@/lib/useAnalyze";
 import { FancyChipButton } from "./FancyChipButton";
+import { listRecentSources } from "@/lib/memory/memory.functions";
 
 type Tab = AnalyzeKind;
 
@@ -22,15 +23,27 @@ export function IngestionPanel({
   onAnalyze,
   onCancel,
   busy = false,
+  peerId,
 }: {
   onAnalyze: (kind: Tab, value: AnalyzeInput) => void;
   onCancel?: () => void;
   busy?: boolean;
+  peerId?: string;
 }) {
   const [tab, setTab] = useState<Tab>("url");
   const [value, setValue] = useState("");
   const [dragging, setDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [recent, setRecent] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!peerId) return;
+    let cancelled = false;
+    listRecentSources({ data: { peerId, limit: 4 } })
+      .then((r) => { if (!cancelled) setRecent(r.sources ?? []); })
+      .catch(() => { /* silent */ });
+    return () => { cancelled = true; };
+  }, [peerId]);
 
   const current = tabs.find((t) => t.id === tab)!;
   const valid =
@@ -210,6 +223,31 @@ export function IngestionPanel({
             />
           ))}
         </div>
+
+        {recent.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-6 pb-4">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-lime self-center">recent</span>
+            {recent.slice(0, 4).map((s) => {
+              const clean = s.replace(/^https?:\/\//, "").replace(/\/$/, "");
+              return (
+                <FancyChipButton
+                  key={s}
+                  label={clean}
+                  hoverLabel="RE-ANALYZE"
+                  hint1="From your memory"
+                  hint2="Click to re-analyze"
+                  disabled={busy}
+                  onClick={() => {
+                    setTab("url");
+                    const v = /^https?:\/\//i.test(s) ? s : `https://${clean}`;
+                    setValue(v);
+                    submit({ kind: "url", value: v });
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

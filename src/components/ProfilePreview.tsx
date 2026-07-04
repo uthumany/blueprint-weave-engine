@@ -1,5 +1,7 @@
-import { Palette, Type, LayoutGrid, Layers, Sparkles, Play, Image as ImageIcon } from "lucide-react";
+import { Palette, Type, LayoutGrid, Layers, Sparkles, Play, Image as ImageIcon, ThumbsUp, ThumbsDown } from "lucide-react";
+import { useState } from "react";
 import type { DnaProfile } from "@/lib/useAnalyze";
+import { recordFeedback } from "@/lib/memory/memory.functions";
 
 const FALLBACK: DnaProfile = {
   mood: ["futuristic", "minimal", "dark", "editorial", "precise"],
@@ -23,15 +25,23 @@ export function ProfilePreview({
   profile,
   screenshot,
   source,
+  peerId,
 }: {
   profile?: DnaProfile | null;
   screenshot?: string | null;
   source?: string | null;
+  peerId?: string;
 }) {
   const p = profile ?? FALLBACK;
   const isLive = !!profile;
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, ".");
   const label = source ?? "linear.app";
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  const sendFeedback = (kept: boolean) => {
+    if (!peerId || !isLive) return;
+    setFeedback(kept ? "up" : "down");
+    recordFeedback({ data: { peerId, source: label, kept } }).catch(() => { /* silent */ });
+  };
 
   return (
     <div className="glass rounded-2xl p-4 sm:p-5 space-y-5">
@@ -42,9 +52,31 @@ export function ProfilePreview({
           </p>
           <h3 className="font-display text-2xl mt-1">Design Profile {isLive && <span className="text-lime">·</span>}</h3>
         </div>
-        <span className="font-mono text-[10px] px-2 py-1 rounded-md bg-lime/15 text-lime border border-lime/30 shrink-0">
-          confidence · {Math.round(p.confidence * 100)}%
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {isLive && peerId && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                aria-label="Keep this profile — teach memory"
+                onClick={() => sendFeedback(true)}
+                className={"size-7 grid place-items-center rounded-md border transition-colors " + (feedback === "up" ? "border-lime/60 text-lime bg-lime/10" : "border-border text-muted-foreground hover:text-lime hover:border-lime/40")}
+              >
+                <ThumbsUp className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Reject — memory will avoid this style"
+                onClick={() => sendFeedback(false)}
+                className={"size-7 grid place-items-center rounded-md border transition-colors " + (feedback === "down" ? "border-magenta/60 text-magenta bg-magenta/10" : "border-border text-muted-foreground hover:text-magenta hover:border-magenta/40")}
+              >
+                <ThumbsDown className="size-3.5" />
+              </button>
+            </div>
+          )}
+          <span className="font-mono text-[10px] px-2 py-1 rounded-md bg-lime/15 text-lime border border-lime/30 shrink-0">
+            confidence · {Math.round(p.confidence * 100)}%
+          </span>
+        </div>
       </div>
 
       {screenshot && (

@@ -1,4 +1,4 @@
-import { FlaskConical, FolderOpen, Wand2, Github, ArrowRight, Menu, X, GitBranch } from "lucide-react";
+import { FlaskConical, FolderOpen, Wand2, Github, ArrowRight, Menu, X, GitBranch, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -10,6 +10,7 @@ const nav: NavItem[] = [
   { icon: FolderOpen,   label: "Profiles", to: "/profiles" },
   { icon: Wand2,        label: "Generate", to: "/generate" },
   { icon: GitBranch,    label: "Repo→Prompt", to: "/repo-to-prompt" },
+  { icon: Search,       label: "Research", to: "/research" },
 ];
 
 export function SiteHeader() {

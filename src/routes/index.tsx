@@ -13,6 +13,8 @@ import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
 import { Icon3D, type Icon3DName } from "@/components/Icon3D";
 import { useAnalyze } from "@/lib/useAnalyze";
+import { getAnonPeerId } from "@/lib/memory/peer";
+import { useEffect, useState, useMemo } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,7 +43,13 @@ function slugify(s: string) {
 }
 
 function Home() {
-  const { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs } = useAnalyze();
+  const { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs, appliedPreferences } = useAnalyze();
+  const [peerId, setPeerId] = useState<string | undefined>(undefined);
+  useEffect(() => { setPeerId(getAnonPeerId()); }, []);
+  const runAnalyze = useMemo(
+    () => (kind: Parameters<typeof analyze>[0], value: Parameters<typeof analyze>[1]) => analyze(kind, value, peerId),
+    [analyze, peerId],
+  );
 
   const downloadProfile = () => {
     if (!profile) {
@@ -141,7 +149,12 @@ function Home() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="mt-8"
             >
-              <IngestionPanel onAnalyze={analyze} onCancel={cancel} busy={live} />
+              <IngestionPanel onAnalyze={runAnalyze} onCancel={cancel} busy={live} peerId={peerId} />
+              {appliedPreferences && (
+                <div className="mt-3 px-3 py-2 rounded-lg border border-lime/30 bg-lime/[0.06] font-mono text-[11px] text-lime">
+                  memory · biasing output from your past picks
+                </div>
+              )}
               {error && (
                 <div className="mt-3 flex items-start gap-2 px-3 py-2 rounded-lg border border-magenta/40 bg-magenta/[0.06] font-mono text-[11px] text-magenta">
                   <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
@@ -279,7 +292,7 @@ function Home() {
             </div>
           </div>
 
-          <ProfilePreview profile={profile} screenshot={screenshot} source={source?.label} />
+          <ProfilePreview profile={profile} screenshot={screenshot} source={source?.label} peerId={peerId} />
         </div>
       </section>
 

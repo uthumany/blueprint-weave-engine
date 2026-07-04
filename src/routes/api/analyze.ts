@@ -5,6 +5,7 @@ const BodySchema = z.object({
   kind: z.enum(["url", "image-url"]),
   // image-url may be a data URL (base64), so allow large payloads
   value: z.string().min(1).max(12_000_000),
+  peerId: z.string().max(120).optional(),
 });
 
 const SYSTEM = `You are a forensic visual design analyzer. Given a screenshot of a website, extract its complete visual DNA.
@@ -68,7 +69,7 @@ export const Route = createFileRoute("/api/analyze")({
             headers: { "content-type": "application/json" },
           });
         }
-        const { kind, value } = parsed.data;
+        const { kind, value, peerId } = parsed.data;
         const apiKey = process.env.LOVABLE_API_KEY;
         if (!apiKey) {
           return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), {
@@ -116,6 +117,31 @@ export const Route = createFileRoute("/api/analyze")({
               phase("handoff", "Handing off to vision model", 20);
               log(`handoff → gemini-2.5-pro (vision)`, "warn");
 
+              // Optional: pull learned preferences from Honcho and bias the prompt.
+              let systemMsg = SYSTEM;
+              let appliedPrefs: unknown = null;
+              if (peerId) {
+                try {
+                  const { dialecticChat, upsertPeer } = await import("@/lib/honcho/honcho.server");
+                  await upsertPeer(peerId);
+                  const q = `Based on this user's past design-DNA analyses and feedback, return ONLY a JSON object like {"moods":string[],"palettes":string[],"typography":string[],"sources":string[],"summary":string}. <=6 items per array. Empty if unknown.`;
+                  const raw = await dialecticChat(peerId, q);
+                  if (raw) {
+                    const s = raw.indexOf("{"); const e = raw.lastIndexOf("}");
+                    if (s !== -1 && e > s) {
+                      try { appliedPrefs = JSON.parse(raw.slice(s, e + 1)); } catch { /* noop */ }
+                    }
+                  }
+                  if (appliedPrefs) {
+                    log("memory · applying learned preferences", "ok");
+                    systemMsg = `${SYSTEM}\n\nUSER PREFERENCE PRIOR (do not fabricate to fit): ${JSON.stringify(appliedPrefs).slice(0, 1200)}`;
+                    controller.enqueue(sseEvent({ type: "memory", preferences: appliedPrefs }));
+                  }
+                } catch (e) {
+                  log(`memory · unavailable (${(e as Error).message.slice(0, 80)})`, "warn");
+                }
+              }
+
               phase("thinking", "Model reasoning", 30);
               startHeartbeat();
 
@@ -129,7 +155,7 @@ export const Route = createFileRoute("/api/analyze")({
                   model: "google/gemini-2.5-pro",
                   stream: true,
                   messages: [
-                    { role: "system", content: SYSTEM },
+                    { role: "system", content: systemMsg },
                     {
                       role: "user",
                       content: [
@@ -234,6 +260,20 @@ export const Route = createFileRoute("/api/analyze")({
               log(`profile.dna.json ✓ saved`, "done");
               phase("done", "Profile ready", 100);
               controller.enqueue(sseEvent({ type: "profile", data: profile, screenshot: publicShot }));
+
+              // Fire-and-forget: persist to Honcho memory.
+              if (peerId) {
+                try {
+                  const { addMessages } = await import("@/lib/honcho/honcho.server");
+                  await addMessages("analyze", peerId, [
+                    JSON.stringify({ event: "analysis", source: kind === "url" ? value : "upload", profile, at: new Date().toISOString() }),
+                  ]);
+                  log("memory · stored analysis", "ok");
+                } catch (e) {
+                  log(`memory · store failed (${(e as Error).message.slice(0, 60)})`, "warn");
+                }
+              }
+
               controller.enqueue(sseEvent({ type: "done" }));
               controller.close();
             } catch (err) {

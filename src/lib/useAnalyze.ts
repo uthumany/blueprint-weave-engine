@@ -40,6 +40,7 @@ export function useAnalyze() {
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<PhaseState | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [appliedPreferences, setAppliedPreferences] = useState<Record<string, unknown> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const reset = () => {
@@ -50,6 +51,7 @@ export function useAnalyze() {
     setError(null);
     setPhase(null);
     setElapsedMs(0);
+    setAppliedPreferences(null);
   };
 
 
@@ -59,7 +61,7 @@ export function useAnalyze() {
     setLive(false);
   }, []);
 
-  const analyze = useCallback(async (kind: AnalyzeKind, value: AnalyzeInput) => {
+  const analyze = useCallback(async (kind: AnalyzeKind, value: AnalyzeInput, peerId?: string) => {
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -90,7 +92,7 @@ export function useAnalyze() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: payloadKind, value: payloadValue }),
+        body: JSON.stringify({ kind: payloadKind, value: payloadValue, peerId }),
         signal: ctrl.signal,
       });
       if (!res.ok || !res.body) {
@@ -128,6 +130,8 @@ export function useAnalyze() {
                 if (msg.screenshot) setScreenshot(msg.screenshot);
               } else if (msg.type === "error") {
                 setError(msg.message);
+              } else if (msg.type === "memory") {
+                setAppliedPreferences(msg.preferences ?? null);
               } else if (msg.type === "done") {
                 setLive(false);
               }
@@ -146,5 +150,5 @@ export function useAnalyze() {
     }
   }, []);
 
-  return { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs };
+  return { analyze, cancel, lines, live, tokens, profile, screenshot, source, error, phase, elapsedMs, appliedPreferences };
 }

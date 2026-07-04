@@ -1,51 +1,77 @@
-# GitHub Repo URL → Prompt Tool
+# Plan: Honcho memory + Context.dev tools
 
-A new full-screen route at `/repo-to-prompt` that turns any public GitHub repo into a copy-ready AI prompt. Fully client-side — no backend, no API keys, no login.
+## Goals
+- Persistent, self-improving memory via **Honcho** (`HONCHO_API_KEY` already in secrets), scoped per browser anonymously and merged into the Supabase user peer on sign-in.
+- Expose all **7 Context.dev tools** (`CONTEXT_DEV_API_KEY` already in secrets): crawl site, web search, scrape markdown, scrape HTML, scrape images, crawl sitemap, screenshot.
+- Plug both into the existing Analyze (URL / screenshot / image-URL) flow.
 
-## New files
+## Architecture
 
-- `src/routes/repo-to-prompt.tsx` — route + page shell, head() metadata
-- `src/components/repo-prompt/RepoUrlInput.tsx` — URL field, validate button, inline errors
-- `src/components/repo-prompt/FileTree.tsx` — collapsible checkbox tree with size badges
-- `src/components/repo-prompt/TemplatePicker.tsx` — 3 preset templates + custom textarea
-- `src/components/repo-prompt/PromptPreview.tsx` — read-only output, char/token count, Copy + Download .md
-- `src/lib/repo-prompt/github.ts` — pure fetch helpers (validate, tree, raw content)
-- `src/lib/repo-prompt/aggregate.ts` — filtering, signal-file detection, prompt assembly, truncation
-- `src/lib/repo-prompt/templates.ts` — the 3 fixed templates + system instruction block
+### Server layer (TanStack `createServerFn`, no edge functions)
+New file `src/lib/honcho/honcho.server.ts`:
+- Thin REST wrapper around Honcho (`https://api.honcho.dev`) using `HONCHO_API_KEY`.
+- Helpers: `getOrCreateWorkspace`, `upsertPeer(peerId)`, `createSession`, `addMessages`, `queryDialectic(peerId, question)`, `getWorkingRepresentation(peerId)`, `mergePeers(anonId, userId)`.
 
-Add nav link to `/repo-to-prompt` in `SiteHeader.tsx`.
+New file `src/lib/context/context.server.ts`:
+- Wrapper around Context.dev REST endpoints for the 7 tools.
 
-## Pipeline (all in-browser)
+New file `src/lib/memory/memory.functions.ts` (`createServerFn`):
+- `resolvePeer({ anonId })` → returns effective peerId (uses `requireSupabaseAuth` optionally; if signed-in, returns `user:<uid>`, merges anon on first call).
+- `recordAnalysis({ peerId, source, profile })` → writes structured message to Honcho session.
+- `getPreferences({ peerId })` → dialectic query: "What visual moods, palettes, typography, and source domains does this user prefer? Return JSON."
+- `listRecentSources({ peerId, limit })` → recent sources from working representation.
+- `recordFeedback({ peerId, profileId, kept, edits })` → captures deltas for learning.
 
-1. **Validate** — regex parse `https://github.com/{owner}/{repo}` (strip `.git`, `/tree/branch/...`). Call `GET https://api.github.com/repos/{owner}/{repo}` → confirm exists, public, capture `default_branch`. On 403 show rate-limit hint (60/hr/IP); on 404 show "not found or private".
-2. **Tree** — `GET /repos/{owner}/{repo}/git/trees/{default_branch}?recursive=1`. Filter `type==='blob'`, drop binary extensions (png/jpg/gif/webp/ico/pdf/zip/tar/gz/woff/ttf/mp4/exe/so/dll/wasm/lock-files-optional), drop `node_modules`, `dist`, `build`, `.next`, `vendor`, `.git`. Sort folder-first.
-3. **Auto-select signal files** — `README*`, `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `Makefile`, `Dockerfile`, `tsconfig.json`, `src/index.*`, `src/main.*`, `src/app.*`, root config files.
-4. **Aggregate** — for each checked file, `GET https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}` in parallel (batched, ~8 concurrent). Wrap as:
-   ```
-   ### path/to/file.ts
-   ```ts
-   <content>
-   ```
-   ```
-   Track running char total; once > 40,000 (user-adjustable slider 10k–200k) append `[TRUNCATED]` and stop. Language tag inferred from extension.
-5. **Compose** — `<template prefix> + <system block> + <aggregated files>`. Custom prompt replaces the template prefix but keeps the file dump.
-6. **Output** — render in mono textarea. Buttons: Copy (Clipboard API + toast), Download .md (Blob + anchor). Live char count + token estimate (chars/4).
+New file `src/lib/context/context.functions.ts` (`createServerFn`):
+- `ctxWebSearch`, `ctxScrapeMarkdown`, `ctxScrapeHtml`, `ctxScrapeImages`, `ctxScreenshot`, `ctxCrawlSite`, `ctxCrawlSitemap`. All Zod-validated, return DTOs.
 
-## UI / UX
+### Analyze flow changes (`src/routes/api/analyze.ts` + `src/lib/useAnalyze.ts`)
+- Before analysis: fetch `getPreferences(peerId)` and inject as a **bias prompt** into the LLM system message ("User historically prefers X moods, Y palettes; weight accordingly, but don't fabricate").
+- Add optional Context.dev enrichment path: for `kind: "url"`, in parallel fetch `ctxScrapeMarkdown(url)` and `ctxScreenshot(url)` and feed both into the model alongside the existing pipeline — improves fidelity vs. current fetch.
+- After analysis: `recordAnalysis` + emit new SSE event `type: "memory"` with `{ appliedPreferences, sessionId }` so UI can show a subtle "learning from your past picks" badge.
 
-- Full-screen page consistent with existing `/profiles`, `/generate` routes (same `SiteHeader`, dark theme, semantic tokens from `src/styles.css`).
-- Three-step layout: **Input** → **Select files** (appears after validation) → **Preview** (appears after Build). Framer-motion fade/slide between steps.
-- File tree: collapsible folders, per-file size in bytes, "Select signals" / "Clear all" buttons, running total chars + token estimate at top.
-- Template picker: 3 cards ("Explain codebase", "Generate README", "Suggest refactors") + "Custom" toggle revealing textarea.
-- Loading states: spinner during validate, progress bar (n/total fetched) during aggregation, cancel button.
-- Errors inline near the source (invalid URL, rate limit, fetch failure per file → marked as skipped in output).
-- Responsive: stacks single-column < 768px; file tree becomes a `<details>` accordion on mobile.
+### Client memory glue
+New file `src/lib/memory/peer.ts`:
+- `getAnonPeerId()` — localStorage `honcho.anonId`, mint uuid on first call.
+- `onSignIn(userId)` — calls `resolvePeer` server fn to merge.
+- Wire into `src/routes/__root.tsx` inside the existing `onAuthStateChange` filter.
 
-## Technical notes
+### UI additions in `IngestionPanel.tsx`
+- Under the existing "try" chips row, add a **Recent** row populated from `listRecentSources` (uses `FancyChipButton`).
+- Small "Learned preferences" tooltip (Icon3D `Star`) that opens a popover showing top mood/palette/typography preferences.
+- Feedback: on the Profile preview, add 👍 / ✎ buttons calling `recordFeedback` to close the learning loop.
 
-- Zod schema for URL parsing.
-- All fetches use plain `fetch` (no auth header → 60/hr unauthenticated limit). Catch 403 with `X-RateLimit-Remaining: 0` and surface remaining time from `X-RateLimit-Reset`.
-- Concurrency via simple `Promise.all` over chunks of 8.
-- Token estimate: `Math.ceil(chars / 4)`.
-- No new dependencies needed (use existing `lucide-react`, `framer-motion`, shadcn `Button`, `Input`, `Textarea`, `Card`, `Checkbox`, `Slider`, `Tabs`, `sonner` toast).
-- No backend, no server functions, no Supabase use.
+### New route: `/research` (Context.dev workbench)
+`src/routes/research.tsx` — tabbed UI (7 tabs, one per tool) using existing glass/surface tokens. Each tab: input(s) → server fn call → result panel (markdown render, image grid, screenshot preview, sitemap list). All calls go through `context.functions.ts`. History of runs stored in Honcho session `research` so returning users see prior queries.
+- Add nav link in `SiteHeader.tsx`.
+- Head metadata: title "Research · Notepadify", meta description, og:type website.
+
+## Security & runtime
+- Both API keys read via `process.env.*` **inside handlers only** (Cloudflare Worker constraint).
+- Input Zod-validated; URLs restricted to `http(s)`; response sizes capped (markdown 500KB, image list 200).
+- No admin Supabase usage; anon peer id lives in localStorage (non-sensitive).
+- No new DB tables required (Honcho is the store). If sign-in merge is requested repeatedly, cache `merged:<uid>` flag in localStorage to avoid re-calling.
+
+## Files to add
+- `src/lib/honcho/honcho.server.ts`
+- `src/lib/context/context.server.ts`
+- `src/lib/context/context.functions.ts`
+- `src/lib/memory/memory.functions.ts`
+- `src/lib/memory/peer.ts`
+- `src/routes/research.tsx`
+- `src/components/PreferencesPopover.tsx`
+- `src/components/RecentSources.tsx`
+
+## Files to edit
+- `src/routes/api/analyze.ts` — inject preferences, optional Context.dev enrichment, emit `memory` SSE event, record analysis.
+- `src/lib/useAnalyze.ts` — handle `memory` SSE event; pass `peerId`.
+- `src/components/IngestionPanel.tsx` — recent chips + preferences popover.
+- `src/components/ProfilePreview.tsx` — feedback buttons.
+- `src/components/SiteHeader.tsx` — `/research` link.
+- `src/routes/__root.tsx` — anon peer bootstrap + merge on sign-in.
+
+## Verification
+1. `bun run build` (typecheck + Vite build).
+2. Playwright: submit `linear.app` URL twice with distinct feedback; second run's SSE `memory` event should include non-empty `appliedPreferences`.
+3. Visit `/research`, run web search + screenshot; screenshot file downloadable, markdown renders.
+4. Sign in mid-session; verify anon session merged (subsequent `getPreferences` returns pre-signin data).
