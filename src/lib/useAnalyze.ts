@@ -51,6 +51,7 @@ export function useAnalyze() {
     setError(null);
     setPhase(null);
     setElapsedMs(0);
+    setAppliedPreferences(null);
   };
 
 
