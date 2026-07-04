@@ -13,6 +13,8 @@ import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
 import { Icon3D, type Icon3DName } from "@/components/Icon3D";
 import { useAnalyze } from "@/lib/useAnalyze";
+import { getAnonPeerId } from "@/lib/memory/peer";
+import { useEffect, useState, useMemo } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
