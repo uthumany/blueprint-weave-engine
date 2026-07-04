@@ -25,15 +25,23 @@ export function ProfilePreview({
   profile,
   screenshot,
   source,
+  peerId,
 }: {
   profile?: DnaProfile | null;
   screenshot?: string | null;
   source?: string | null;
+  peerId?: string;
 }) {
   const p = profile ?? FALLBACK;
   const isLive = !!profile;
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, ".");
   const label = source ?? "linear.app";
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  const sendFeedback = (kept: boolean) => {
+    if (!peerId || !isLive) return;
+    setFeedback(kept ? "up" : "down");
+    recordFeedback({ data: { peerId, source: label, kept } }).catch(() => { /* silent */ });
+  };
 
   return (
     <div className="glass rounded-2xl p-4 sm:p-5 space-y-5">
