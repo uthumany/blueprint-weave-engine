@@ -69,7 +69,7 @@ export const Route = createFileRoute("/api/analyze")({
             headers: { "content-type": "application/json" },
           });
         }
-        const { kind, value } = parsed.data;
+        const { kind, value, peerId } = parsed.data;
         const apiKey = process.env.LOVABLE_API_KEY;
         if (!apiKey) {
           return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), {
