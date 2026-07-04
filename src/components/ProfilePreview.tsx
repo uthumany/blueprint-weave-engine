@@ -52,9 +52,31 @@ export function ProfilePreview({
           </p>
           <h3 className="font-display text-2xl mt-1">Design Profile {isLive && <span className="text-lime">·</span>}</h3>
         </div>
-        <span className="font-mono text-[10px] px-2 py-1 rounded-md bg-lime/15 text-lime border border-lime/30 shrink-0">
-          confidence · {Math.round(p.confidence * 100)}%
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {isLive && peerId && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                aria-label="Keep this profile — teach memory"
+                onClick={() => sendFeedback(true)}
+                className={"size-7 grid place-items-center rounded-md border transition-colors " + (feedback === "up" ? "border-lime/60 text-lime bg-lime/10" : "border-border text-muted-foreground hover:text-lime hover:border-lime/40")}
+              >
+                <ThumbsUp className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Reject — memory will avoid this style"
+                onClick={() => sendFeedback(false)}
+                className={"size-7 grid place-items-center rounded-md border transition-colors " + (feedback === "down" ? "border-magenta/60 text-magenta bg-magenta/10" : "border-border text-muted-foreground hover:text-magenta hover:border-magenta/40")}
+              >
+                <ThumbsDown className="size-3.5" />
+              </button>
+            </div>
+          )}
+          <span className="font-mono text-[10px] px-2 py-1 rounded-md bg-lime/15 text-lime border border-lime/30 shrink-0">
+            confidence · {Math.round(p.confidence * 100)}%
+          </span>
+        </div>
       </div>
 
       {screenshot && (
