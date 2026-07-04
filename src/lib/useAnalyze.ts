@@ -61,7 +61,7 @@ export function useAnalyze() {
     setLive(false);
   }, []);
 
-  const analyze = useCallback(async (kind: AnalyzeKind, value: AnalyzeInput) => {
+  const analyze = useCallback(async (kind: AnalyzeKind, value: AnalyzeInput, peerId?: string) => {
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
