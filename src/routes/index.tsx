@@ -149,7 +149,12 @@ function Home() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="mt-8"
             >
-              <IngestionPanel onAnalyze={analyze} onCancel={cancel} busy={live} />
+              <IngestionPanel onAnalyze={runAnalyze} onCancel={cancel} busy={live} peerId={peerId} />
+              {appliedPreferences && (
+                <div className="mt-3 px-3 py-2 rounded-lg border border-lime/30 bg-lime/[0.06] font-mono text-[11px] text-lime">
+                  memory · biasing output from your past picks
+                </div>
+              )}
               {error && (
                 <div className="mt-3 flex items-start gap-2 px-3 py-2 rounded-lg border border-magenta/40 bg-magenta/[0.06] font-mono text-[11px] text-magenta">
                   <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
