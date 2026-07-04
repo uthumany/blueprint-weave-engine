@@ -223,6 +223,31 @@ export function IngestionPanel({
             />
           ))}
         </div>
+
+        {recent.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-6 pb-4">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-lime self-center">recent</span>
+            {recent.slice(0, 4).map((s) => {
+              const clean = s.replace(/^https?:\/\//, "").replace(/\/$/, "");
+              return (
+                <FancyChipButton
+                  key={s}
+                  label={clean}
+                  hoverLabel="RE-ANALYZE"
+                  hint1="From your memory"
+                  hint2="Click to re-analyze"
+                  disabled={busy}
+                  onClick={() => {
+                    setTab("url");
+                    const v = /^https?:\/\//i.test(s) ? s : `https://${clean}`;
+                    setValue(v);
+                    submit({ kind: "url", value: v });
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
