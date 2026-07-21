@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Search, FileText, Code, Image as ImageIcon, Camera, Map, Globe, Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Search, FileText, Code, Image as ImageIcon, Camera, Map, Globe, Loader2, Copy, Check, Download, ExternalLink } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   ctxWebSearch, ctxScrapeMarkdown, ctxScrapeHtml, ctxScrapeImages,
