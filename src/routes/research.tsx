@@ -202,21 +202,165 @@ function ResultView({ tool, data }: { tool: Tool; data: any }) {
     );
   }
   if (tool === "crawl") {
-    const pages = data?.pages ?? [];
-    return pages.length ? (
-      <div className="space-y-3 max-h-[600px] overflow-auto">
-        {pages.map((p: { url?: string; markdown?: string; title?: string }, i: number) => (
-          <details key={i} className="border border-border rounded-lg p-3 bg-ink/30">
-            <summary className="cursor-pointer text-sm text-foreground">{p.title ?? p.url}</summary>
-            <pre className="mt-2 whitespace-pre-wrap text-[11px] font-mono text-muted-foreground max-h-[300px] overflow-auto">
-              {p.markdown ?? ""}
-            </pre>
-          </details>
-        ))}
-      </div>
-    ) : <RawJson data={data} />;
+    return <CrawlView data={data} />;
   }
   return <RawJson data={data} />;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CrawlView({ data }: { data: any }) {
+  // Normalize: context.dev may return {pages}, {data:{pages}}, {results}, or an array
+  const pages: Array<{ url?: string; title?: string; markdown?: string; content?: string }> =
+    data?.pages ?? data?.data?.pages ?? data?.results ?? data?.data?.results ??
+    (Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []);
+
+  if (!pages.length) return <RawJson data={data} />;
+
+  const allMd = pages
+    .map((p) => `# ${p.title ?? p.url ?? "Untitled"}\n${p.url ? `\n<${p.url}>\n` : ""}\n${p.markdown ?? p.content ?? ""}`)
+    .join("\n\n---\n\n");
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="text-lime">›</span> {pages.length} page{pages.length === 1 ? "" : "s"} crawled
+        </p>
+        <div className="flex gap-2">
+          <CopyBtn text={allMd} label="Copy all" />
+          <DownloadBtn text={allMd} filename="crawl.md" />
+        </div>
+      </div>
+      <div className="space-y-2 max-h-[70vh] overflow-auto pr-1">
+        {pages.map((p, i) => <PageCard key={i} page={p} />)}
+      </div>
+    </div>
+  );
+}
+
+function PageCard({ page }: { page: { url?: string; title?: string; markdown?: string; content?: string } }) {
+  const [open, setOpen] = useState(false);
+  const md = page.markdown ?? page.content ?? "";
+  return (
+    <div className="border border-border rounded-lg bg-ink/30 overflow-hidden">
+      <div className="flex items-center justify-between gap-2 p-3">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex-1 min-w-0 text-left"
+        >
+          <p className="text-sm text-foreground truncate">{page.title ?? page.url ?? "Untitled"}</p>
+          {page.url && (
+            <p className="font-mono text-[10px] text-muted-foreground truncate mt-0.5">{page.url}</p>
+          )}
+        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          {page.url && (
+            <a
+              href={page.url}
+              target="_blank"
+              rel="noreferrer"
+              className="p-1.5 rounded-md hover:bg-surface text-muted-foreground hover:text-foreground"
+              title="Open source"
+            >
+              <ExternalLink className="size-3.5" />
+            </a>
+          )}
+          <CopyBtn text={md} compact />
+          <DownloadBtn text={md} filename={filenameFor(page)} compact />
+        </div>
+      </div>
+      {open && (
+        <div className="border-t border-border px-4 py-3 bg-background/40 max-h-[420px] overflow-auto">
+          {md ? (
+            <div className="prose prose-invert prose-sm max-w-none prose-headings:font-display prose-a:text-lime prose-code:text-lime">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
+            </div>
+          ) : (
+            <p className="font-mono text-xs text-muted-foreground">no markdown returned for this page</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function filenameFor(p: { url?: string; title?: string }): string {
+  const base = (p.title ?? p.url ?? "page")
+    .replace(/^https?:\/\//i, "")
+    .replace(/[^a-z0-9]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || "page";
+  return `${base}.md`;
+}
+
+function CopyBtn({ text, label, compact }: { text: string; label?: string; compact?: boolean }) {
+  const [done, setDone] = useState(false);
+  const onClick = async () => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setDone(true);
+      setTimeout(() => setDone(false), 1200);
+    } catch { /* ignore */ }
+  };
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="p-1.5 rounded-md hover:bg-surface text-muted-foreground hover:text-foreground"
+        title="Copy markdown"
+      >
+        {done ? <Check className="size-3.5 text-lime" /> : <Copy className="size-3.5" />}
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-ink/40 text-xs font-mono hover:border-lime/50"
+    >
+      {done ? <Check className="size-3.5 text-lime" /> : <Copy className="size-3.5" />}
+      {done ? "copied" : label ?? "Copy"}
+    </button>
+  );
+}
+
+function DownloadBtn({ text, filename, compact }: { text: string; filename: string; compact?: boolean }) {
+  const onClick = () => {
+    if (!text) return;
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="p-1.5 rounded-md hover:bg-surface text-muted-foreground hover:text-foreground"
+        title="Download .md"
+      >
+        <Download className="size-3.5" />
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-ink/40 text-xs font-mono hover:border-lime/50"
+    >
+      <Download className="size-3.5" />
+      .md
+    </button>
+  );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
