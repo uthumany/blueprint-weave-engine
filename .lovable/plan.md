@@ -1,77 +1,78 @@
-# Plan: Honcho memory + Context.dev tools
 
-## Goals
-- Persistent, self-improving memory via **Honcho** (`HONCHO_API_KEY` already in secrets), scoped per browser anonymously and merged into the Supabase user peer on sign-in.
-- Expose all **7 Context.dev tools** (`CONTEXT_DEV_API_KEY` already in secrets): crawl site, web search, scrape markdown, scrape HTML, scrape images, crawl sitemap, screenshot.
-- Plug both into the existing Analyze (URL / screenshot / image-URL) flow.
+## Goal
 
-## Architecture
+Match the reference output (`design.json` + `DESIGN.md` you attached) — a forensic, HTML/CSS-grounded profile with palette roles, full type scale, spacing scale, radius scale, shadows, component specs, @font-face URLs, and CSS custom properties — instead of the current thin 6-color/one-shadow JSON from the vision model.
 
-### Server layer (TanStack `createServerFn`, no edge functions)
-New file `src/lib/honcho/honcho.server.ts`:
-- Thin REST wrapper around Honcho (`https://api.honcho.dev`) using `HONCHO_API_KEY`.
-- Helpers: `getOrCreateWorkspace`, `upsertPeer(peerId)`, `createSession`, `addMessages`, `queryDialectic(peerId, question)`, `getWorkingRepresentation(peerId)`, `mergePeers(anonId, userId)`.
+## What changes
 
-New file `src/lib/context/context.server.ts`:
-- Wrapper around Context.dev REST endpoints for the 7 tools.
+### 1. Rich schema (`src/lib/useAnalyze.ts`)
+Extend `DnaProfile` to mirror the reference:
 
-New file `src/lib/memory/memory.functions.ts` (`createServerFn`):
-- `resolvePeer({ anonId })` → returns effective peerId (uses `requireSupabaseAuth` optionally; if signed-in, returns `user:<uid>`, merges anon on first call).
-- `recordAnalysis({ peerId, source, profile })` → writes structured message to Honcho session.
-- `getPreferences({ peerId })` → dialectic query: "What visual moods, palettes, typography, and source domains does this user prefer? Return JSON."
-- `listRecentSources({ peerId, limit })` → recent sources from working representation.
-- `recordFeedback({ peerId, profileId, kept, edits })` → captures deltas for learning.
+```ts
+type DnaProfile = {
+  url?: string; title?: string; description?: string; scrapedAt: string;
+  colors: {
+    bg, bgSecondary, text, textSecondary, primary, secondary, border: string;
+    palette: { hex, role, count, area, contrast }[];
+  };
+  typography: {
+    headingFont: { family, cleanFamily, weights[], usedFor, fallback, realUrl? };
+    bodyFont: { ... };
+    fontSizes: number[]; lineHeights: number[];
+    details: { role, size, weight, lineHeight, letterSpacing, font }[];
+  };
+  spacing: { base: number; common: { value, count, role }[] };
+  borderRadius: { value, count, role }[];
+  shadows: { value, count, level }[];
+  components: { primaryButton, buttons[], card };
+  fontFaces: { family, src, style, weight }[];
+  cssCustomProperties: { name, value, category }[];
+  tags: string[]; mood: string; heroHeadline?: string; heroSubtitle?: string;
+  confidence: number;
+};
+```
+Keep the old flat fields as a computed view for the existing `ProfilePreview` so nothing breaks.
 
-New file `src/lib/context/context.functions.ts` (`createServerFn`):
-- `ctxWebSearch`, `ctxScrapeMarkdown`, `ctxScrapeHtml`, `ctxScrapeImages`, `ctxScreenshot`, `ctxCrawlSite`, `ctxCrawlSitemap`. All Zod-validated, return DTOs.
+### 2. HTML-grounded extraction (`src/routes/api/analyze.ts`)
+Vision alone can't produce hex-accurate palettes, font URLs, or CSS variables. New pipeline for `kind === "url"`:
 
-### Analyze flow changes (`src/routes/api/analyze.ts` + `src/lib/useAnalyze.ts`)
-- Before analysis: fetch `getPreferences(peerId)` and inject as a **bias prompt** into the LLM system message ("User historically prefers X moods, Y palettes; weight accordingly, but don't fabricate").
-- Add optional Context.dev enrichment path: for `kind: "url"`, in parallel fetch `ctxScrapeMarkdown(url)` and `ctxScreenshot(url)` and feed both into the model alongside the existing pipeline — improves fidelity vs. current fetch.
-- After analysis: `recordAnalysis` + emit new SSE event `type: "memory"` with `{ appliedPreferences, sessionId }` so UI can show a subtle "learning from your past picks" badge.
+1. **Scrape** — call Context.dev `scrapeHtml` to get raw HTML + inline/linked CSS (already wired in `context.server.ts`).
+2. **Parse locally** (new `src/lib/analyzer/extract.ts`, server-only):
+   - Regex/CSSOM-lite extraction of `@font-face` blocks → `fontFaces[]`
+   - `:root`/`html` custom properties → `cssCustomProperties[]` (categorize by name: color/typography/spacing/other)
+   - Tally `color`, `background-color`, `border-color` hex values → ranked palette with counts
+   - Tally `font-size`, `line-height`, `letter-spacing`, `border-radius`, `padding`, `margin`, `gap` values → scales
+   - Tally `box-shadow` values → deep/medium/soft levels
+   - Extract `<title>`, meta description, first H1/H2 → hero headline/subtitle
+3. **Screenshot** (existing microlink/thum.io fallback) — still used for the vision pass and preview image.
+4. **Vision pass** — send Gemini the screenshot **plus the extracted raw tokens** and ask it to (a) assign semantic roles (primary/secondary/bg/text/border), (b) infer mood tags, (c) classify buttons detected from CSS, (d) rate confidence. Model output is merged with the deterministic extracted data — deterministic wins on hex/size/URL fields.
+5. For `image-url` / `screenshot` uploads: skip step 1–2, run vision-only, populate only fields the model can infer (same as today but reshaped into the new schema).
 
-### Client memory glue
-New file `src/lib/memory/peer.ts`:
-- `getAnonPeerId()` — localStorage `honcho.anonId`, mint uuid on first call.
-- `onSignIn(userId)` — calls `resolvePeer` server fn to merge.
-- Wire into `src/routes/__root.tsx` inside the existing `onAuthStateChange` filter.
+Stream new phase: `extracting` between `capture` and `handoff` with real per-token log lines (`palette · 24 unique hex`, `fontFaces · 4 @font-face`, `custom properties · 33 tokens`).
 
-### UI additions in `IngestionPanel.tsx`
-- Under the existing "try" chips row, add a **Recent** row populated from `listRecentSources` (uses `FancyChipButton`).
-- Small "Learned preferences" tooltip (Icon3D `Star`) that opens a popover showing top mood/palette/typography preferences.
-- Feedback: on the Profile preview, add 👍 / ✎ buttons calling `recordFeedback` to close the learning loop.
+### 3. Markdown export (`src/lib/analyzer/markdown.ts`)
+Pure function `profileToMarkdown(profile)` producing the 10-section `DESIGN.md` layout from your reference: Visual Theme, Color Palette & Roles, Typography Rules, Component Stylings (CSS blocks), Layout Principles, Depth & Elevation, Do's/Don'ts, Responsive Behavior, Agent Prompt Guide, CSS Custom Properties tables.
 
-### New route: `/research` (Context.dev workbench)
-`src/routes/research.tsx` — tabbed UI (7 tabs, one per tool) using existing glass/surface tokens. Each tab: input(s) → server fn call → result panel (markdown render, image grid, screenshot preview, sitemap list). All calls go through `context.functions.ts`. History of runs stored in Honcho session `research` so returning users see prior queries.
-- Add nav link in `SiteHeader.tsx`.
-- Head metadata: title "Research · Notepadify", meta description, og:type website.
+### 4. Export UI (`src/routes/index.tsx`)
+Replace the single "Download .dna.json" button with three:
+- **Download `design.json`** — full new schema
+- **Download `DESIGN.md`** — rendered markdown
+- **Copy JSON** (existing)
 
-## Security & runtime
-- Both API keys read via `process.env.*` **inside handlers only** (Cloudflare Worker constraint).
-- Input Zod-validated; URLs restricted to `http(s)`; response sizes capped (markdown 500KB, image list 200).
-- No admin Supabase usage; anon peer id lives in localStorage (non-sensitive).
-- No new DB tables required (Honcho is the store). If sign-in merge is requested repeatedly, cache `merged:<uid>` flag in localStorage to avoid re-calling.
+### 5. Profile preview (`src/components/ProfilePreview.tsx`)
+Show the extra info when present: role-labeled swatch grid (bg/text/primary/secondary/accents), font-family strings with `@font-face` badge, full type-scale row, radius scale row, shadow preview swatch. Falls back cleanly on image-only analyses.
 
-## Files to add
-- `src/lib/honcho/honcho.server.ts`
-- `src/lib/context/context.server.ts`
-- `src/lib/context/context.functions.ts`
-- `src/lib/memory/memory.functions.ts`
-- `src/lib/memory/peer.ts`
-- `src/routes/research.tsx`
-- `src/components/PreferencesPopover.tsx`
-- `src/components/RecentSources.tsx`
+## Non-goals
 
-## Files to edit
-- `src/routes/api/analyze.ts` — inject preferences, optional Context.dev enrichment, emit `memory` SSE event, record analysis.
-- `src/lib/useAnalyze.ts` — handle `memory` SSE event; pass `peerId`.
-- `src/components/IngestionPanel.tsx` — recent chips + preferences popover.
-- `src/components/ProfilePreview.tsx` — feedback buttons.
-- `src/components/SiteHeader.tsx` — `/research` link.
-- `src/routes/__root.tsx` — anon peer bootstrap + merge on sign-in.
+- No changes to Repo→Prompt, Research page, Honcho memory shape, or router/auth.
+- No new dependencies — regex-based CSS parsing is enough for this schema (mirrors what the reference clearly did).
+- Image-URL/screenshot uploads keep vision-only output (the source doesn't have HTML). We just reshape into the new schema with empty `fontFaces` / `cssCustomProperties`.
 
-## Verification
-1. `bun run build` (typecheck + Vite build).
-2. Playwright: submit `linear.app` URL twice with distinct feedback; second run's SSE `memory` event should include non-empty `appliedPreferences`.
-3. Visit `/research`, run web search + screenshot; screenshot file downloadable, markdown renders.
-4. Sign in mid-session; verify anon session merged (subsequent `getPreferences` returns pre-signin data).
+## Files touched
+
+- new `src/lib/analyzer/extract.ts` (server-only CSS/HTML extractor)
+- new `src/lib/analyzer/markdown.ts` (profile → DESIGN.md)
+- edit `src/lib/useAnalyze.ts` (new `DnaProfile` type)
+- edit `src/routes/api/analyze.ts` (extract → vision → merge pipeline, new phase)
+- edit `src/components/ProfilePreview.tsx` (richer render, backward-compatible)
+- edit `src/routes/index.tsx` (three export buttons)
