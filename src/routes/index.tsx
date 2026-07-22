@@ -54,7 +54,7 @@ function Home() {
 
   const downloadProfile = () => {
     if (!profile) {
-      toast.error("Analyze a website first to generate a .dna.json.");
+      toast.error("Analyze a website first to generate design.json.");
       return;
     }
     const name = source?.label ? slugify(source.label) : "profile";
@@ -62,12 +62,31 @@ function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${name}.dna.json`;
+    a.download = `${name}.design.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    toast.success(`Saved ${name}.dna.json`);
+    toast.success(`Saved ${name}.design.json`);
+  };
+
+  const downloadMarkdown = () => {
+    if (!profile) {
+      toast.error("Analyze a website first to generate DESIGN.md.");
+      return;
+    }
+    const name = source?.label ? slugify(source.label) : "profile";
+    const md = profileToMarkdown(profile);
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${name}.DESIGN.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`Saved ${name}.DESIGN.md`);
   };
 
   const copyProfile = () => {
