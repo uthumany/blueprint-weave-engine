@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Loader2, Camera, Send, Brain, Sparkles, FileCheck2, CheckCircle2 } from "lucide-react";
+import { Check, Loader2, Camera, Send, Brain, Sparkles, FileCheck2, CheckCircle2, Beaker } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PhaseId, PhaseState } from "@/lib/useAnalyze";
 
 const STEPS: { id: PhaseId; label: string; icon: typeof Camera }[] = [
   { id: "capture", label: "Capture", icon: Camera },
+  { id: "extract", label: "Extract", icon: Beaker },
   { id: "handoff", label: "Handoff", icon: Send },
   { id: "thinking", label: "Reason", icon: Brain },
   { id: "streaming", label: "Stream", icon: Sparkles },

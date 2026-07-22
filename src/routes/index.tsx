@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Scan, FileJson, Wand2, Download,
-  ArrowRight, Lock, Zap, AlertTriangle, Copy,
+  ArrowRight, Lock, Zap, AlertTriangle, Copy, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -13,6 +13,7 @@ import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
 import { Icon3D, type Icon3DName } from "@/components/Icon3D";
 import { useAnalyze } from "@/lib/useAnalyze";
+import { profileToMarkdown } from "@/lib/analyzer/markdown";
 import { getAnonPeerId } from "@/lib/memory/peer";
 import { useEffect, useState, useMemo } from "react";
 
@@ -53,7 +54,7 @@ function Home() {
 
   const downloadProfile = () => {
     if (!profile) {
-      toast.error("Analyze a website first to generate a .dna.json.");
+      toast.error("Analyze a website first to generate design.json.");
       return;
     }
     const name = source?.label ? slugify(source.label) : "profile";
@@ -61,12 +62,31 @@ function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${name}.dna.json`;
+    a.download = `${name}.design.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    toast.success(`Saved ${name}.dna.json`);
+    toast.success(`Saved ${name}.design.json`);
+  };
+
+  const downloadMarkdown = () => {
+    if (!profile) {
+      toast.error("Analyze a website first to generate DESIGN.md.");
+      return;
+    }
+    const name = source?.label ? slugify(source.label) : "profile";
+    const md = profileToMarkdown(profile);
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${name}.DESIGN.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`Saved ${name}.DESIGN.md`);
   };
 
   const copyProfile = () => {
@@ -265,7 +285,15 @@ function Home() {
                 disabled={!profile}
                 className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border text-sm hover:border-lime/40 transition-colors disabled:opacity-40 disabled:hover:border-border"
               >
-                <Download className="size-4" /> Download .dna.json
+                <Download className="size-4" /> design.json
+              </button>
+              <button
+                type="button"
+                onClick={downloadMarkdown}
+                disabled={!profile}
+                className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border text-sm hover:border-lime/40 transition-colors disabled:opacity-40 disabled:hover:border-border"
+              >
+                <FileText className="size-4" /> DESIGN.md
               </button>
               <button
                 type="button"
@@ -279,8 +307,8 @@ function Home() {
 
             <div className="mt-10 grid grid-cols-2 gap-4 max-w-md">
               {[
-                { k: "dimensions", v: "07" },
-                { k: "tokens / profile", v: profile ? String(profile.palette.length + profile.spacing.scale.length + 8).padStart(2, "0") : "~84" },
+                { k: "dimensions", v: "10" },
+                { k: "tokens / profile", v: profile ? String(profile.colors.palette.length + profile.spacing.common.length + profile.cssCustomProperties.length).padStart(2, "0") : "~84" },
                 { k: "confidence", v: profile ? `${Math.round(profile.confidence * 100)}%` : "—" },
                 { k: "free tier", v: "∞" },
               ].map((s) => (

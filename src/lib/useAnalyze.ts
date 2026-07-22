@@ -1,19 +1,9 @@
 import { useCallback, useRef, useState } from "react";
 import type { LogLine } from "@/components/ExtractionLog";
+import type { DnaProfile } from "@/lib/analyzer/schema";
 
+export type { DnaProfile } from "@/lib/analyzer/schema";
 export type AnalyzeKind = "url" | "screenshot" | "image-url";
-
-export type DnaProfile = {
-  mood: string[];
-  palette: { name: string; hex: string; role: string }[];
-  typography: { display: string; body: string; mono?: string; scale: string[] };
-  spacing: { base: number; scale: number[] };
-  radius: { sm: number; md: number; lg: number; full: number };
-  effects: { shadow: string; blur: string; noise: boolean; grain: boolean };
-  motion: { ease: string; duration_ms: number };
-  confidence: number;
-};
-
 export type AnalyzeInput = string | File;
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
@@ -27,7 +17,7 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-export type PhaseId = "capture" | "handoff" | "thinking" | "streaming" | "parsing" | "done";
+export type PhaseId = "capture" | "extract" | "handoff" | "thinking" | "streaming" | "parsing" | "done";
 export type PhaseState = { id: PhaseId; label: string; pct: number; elapsed: number };
 
 export function useAnalyze() {
@@ -54,7 +44,6 @@ export function useAnalyze() {
     setAppliedPreferences(null);
   };
 
-
   const cancel = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -68,16 +57,14 @@ export function useAnalyze() {
     reset();
     setLive(true);
 
-    let payloadKind: "url" | "image-url" = kind === "url" ? "url" : "image-url";
+    const payloadKind: "url" | "image-url" = kind === "url" ? "url" : "image-url";
     let payloadValue: string;
     let label: string;
     let localPreview: string | null = null;
 
     try {
       if (value instanceof File) {
-        if (value.size > MAX_UPLOAD_BYTES) {
-          throw new Error("File too large — max 8 MB.");
-        }
+        if (value.size > MAX_UPLOAD_BYTES) throw new Error("File too large — max 8 MB.");
         payloadValue = await fileToDataUrl(value);
         localPreview = payloadValue;
         label = value.name;

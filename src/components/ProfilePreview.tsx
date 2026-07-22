@@ -1,23 +1,37 @@
-import { Palette, Type, LayoutGrid, Layers, Sparkles, Play, Image as ImageIcon, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Palette, Type, LayoutGrid, Layers, Sparkles, Image as ImageIcon, ThumbsUp, ThumbsDown, CornerDownRight } from "lucide-react";
 import { useState } from "react";
-import type { DnaProfile } from "@/lib/useAnalyze";
+import type { DnaProfile } from "@/lib/analyzer/schema";
 import { recordFeedback } from "@/lib/memory/memory.functions";
 
 const FALLBACK: DnaProfile = {
-  mood: ["futuristic", "minimal", "dark", "editorial", "precise"],
-  palette: [
-    { name: "ink",     hex: "#0B0D10", role: "bg" },
-    { name: "primary", hex: "#5E6AD2", role: "accent" },
-    { name: "accent",  hex: "#9EE756", role: "accent-2" },
-    { name: "fg",      hex: "#F2F2F2", role: "text" },
-    { name: "surface", hex: "#2A2D33", role: "surface" },
-    { name: "alert",   hex: "#E8345A", role: "muted" },
-  ],
-  typography: { display: "Instrument Serif", body: "Inter", scale: ["12", "14", "16", "20", "28", "40"] },
-  spacing: { base: 4, scale: [4, 8, 12, 16, 24, 32, 48] },
-  radius: { sm: 4, md: 8, lg: 16, full: 9999 },
-  effects: { shadow: "shadow·xl", blur: "blur(24px)", noise: true, grain: true },
-  motion: { ease: "cubic-bezier(.2,.8,.2,1)", duration_ms: 240 },
+  scrapedAt: new Date().toISOString(),
+  colors: {
+    bg: "#0B0D10", bgSecondary: "#12151A", text: "#F2F2F2", textSecondary: "#9CA3AF",
+    primary: "#5E6AD2", secondary: "#9EE756", border: "#2A2D33",
+    palette: [
+      { hex: "#0B0D10", role: "block", count: 12, contrast: "light" },
+      { hex: "#5E6AD2", role: "text-accent", count: 8, contrast: "light" },
+      { hex: "#9EE756", role: "text-accent", count: 6, contrast: "dark" },
+      { hex: "#F2F2F2", role: "text-accent", count: 5, contrast: "dark" },
+      { hex: "#2A2D33", role: "block", count: 4, contrast: "light" },
+      { hex: "#E8345A", role: "text-accent", count: 2, contrast: "light" },
+    ],
+  },
+  typography: {
+    headingFont: { family: "Instrument Serif", cleanFamily: "Instrument Serif", weights: ["400"], usedFor: "heading", fallback: "serif" },
+    bodyFont: { family: "Inter", cleanFamily: "Inter", weights: ["400", "600"], usedFor: "body", fallback: "sans-serif" },
+    fontSizes: [40, 28, 20, 16, 14, 12],
+    lineHeights: [],
+    details: [],
+  },
+  spacing: { base: 4, common: [{ value: 4, count: 10, role: "element" }, { value: 8, count: 8, role: "element" }, { value: 16, count: 6, role: "element" }, { value: 32, count: 3, role: "card" }] },
+  borderRadius: [{ value: 8, count: 6, role: "button" }, { value: 16, count: 3, role: "card" }],
+  shadows: [],
+  components: { primaryButton: null, buttons: [], card: null },
+  fontFaces: [],
+  cssCustomProperties: [],
+  tags: ["futuristic", "minimal", "dark"],
+  mood: "Futuristic, minimal, dark editorial.",
   confidence: 0.94,
 };
 
@@ -88,15 +102,13 @@ export function ProfilePreview({
         </Section>
       )}
 
-      <Section icon={Palette} label="Color System">
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          {p.palette.slice(0, 12).map((s, i) => (
+      <Section icon={Palette} label={`Color System · ${p.colors.palette.length} tokens`}>
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+          {p.colors.palette.slice(0, 12).map((s, i) => (
             <button
-              key={`${s.name}-${i}`}
+              key={`${s.hex}-${i}`}
               type="button"
-              onClick={() => {
-                navigator.clipboard?.writeText(s.hex).catch(() => {});
-              }}
+              onClick={() => navigator.clipboard?.writeText(s.hex).catch(() => {})}
               title={`Copy ${s.hex}`}
               className="text-left space-y-1.5 group"
             >
@@ -104,9 +116,17 @@ export function ProfilePreview({
                 className="aspect-square rounded-lg border border-border group-hover:border-lime/50 transition-colors"
                 style={{ background: s.hex }}
               />
-              <p className="font-mono text-[9px] text-muted-foreground truncate">{s.name}</p>
+              <p className="font-mono text-[9px] text-muted-foreground truncate">{s.role}</p>
               <p className="font-mono text-[9px] text-muted-foreground/60 truncate">{s.hex}</p>
             </button>
+          ))}
+        </div>
+        <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-1.5 font-mono text-[9px] text-muted-foreground">
+          {(["bg", "text", "primary", "secondary", "border", "bgSecondary", "textSecondary"] as const).map((k) => (
+            <div key={k} className="flex items-center gap-1.5 truncate">
+              <span className="size-3 rounded-sm border border-border shrink-0" style={{ background: p.colors[k] }} />
+              <span className="truncate">{k} · {p.colors[k]}</span>
+            </div>
           ))}
         </div>
       </Section>
@@ -115,45 +135,63 @@ export function ProfilePreview({
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg bg-ink/40 border border-border p-3">
             <p className="font-display text-3xl leading-none">Aa</p>
-            <p className="font-mono text-[10px] text-muted-foreground mt-2 truncate">{p.typography.display} · display</p>
+            <p className="font-mono text-[10px] text-muted-foreground mt-2 truncate">{p.typography.headingFont.cleanFamily} · display</p>
           </div>
           <div className="rounded-lg bg-ink/40 border border-border p-3">
             <p className="text-3xl leading-none font-medium">Aa</p>
-            <p className="font-mono text-[10px] text-muted-foreground mt-2 truncate">{p.typography.body} · body</p>
+            <p className="font-mono text-[10px] text-muted-foreground mt-2 truncate">{p.typography.bodyFont.cleanFamily} · body</p>
           </div>
         </div>
+        {p.typography.fontSizes.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {p.typography.fontSizes.slice(0, 8).map((s, i) => (
+              <span key={i} className="font-mono text-[10px] px-2 py-1 rounded-md bg-surface border border-border">{s}px</span>
+            ))}
+          </div>
+        )}
+        {p.fontFaces.length > 0 && (
+          <p className="mt-2 font-mono text-[10px] text-lime">@font-face · {p.fontFaces.length} loaded</p>
+        )}
       </Section>
 
       <div className="grid grid-cols-2 gap-3">
-        <Section icon={LayoutGrid} label={`Spacing · base ${p.spacing.base}`}>
+        <Section icon={LayoutGrid} label={`Spacing · base ${p.spacing.base}px`}>
           <div className="flex items-end gap-1.5 flex-wrap">
-            {p.spacing.scale.slice(0, 8).map((n, i) => (
-              <div key={`${n}-${i}`} className="flex flex-col items-center gap-1.5">
-                <div className="w-3 bg-lime/70 rounded-sm" style={{ height: Math.min(n, 56) }} />
-                <span className="font-mono text-[9px] text-muted-foreground">{n}</span>
+            {p.spacing.common.slice(0, 8).map((s, i) => (
+              <div key={`${s.value}-${i}`} className="flex flex-col items-center gap-1.5">
+                <div className="w-3 bg-lime/70 rounded-sm" style={{ height: Math.min(s.value, 56) }} />
+                <span className="font-mono text-[9px] text-muted-foreground">{s.value}</span>
               </div>
             ))}
           </div>
         </Section>
-        <Section icon={Layers} label="Effects">
+        <Section icon={CornerDownRight} label="Radius">
           <div className="flex flex-wrap gap-1.5">
-            {[
-              p.effects.blur && `blur·${p.effects.blur}`,
-              p.effects.noise && "noise",
-              p.effects.grain && "grain",
-              p.effects.shadow,
-            ].filter(Boolean).map((e) => (
-              <span key={String(e)} className="font-mono text-[10px] px-2 py-1 rounded-md bg-surface border border-border truncate max-w-[140px]">
-                {String(e)}
+            {p.borderRadius.slice(0, 6).map((r, i) => (
+              <span key={i} className="font-mono text-[10px] px-2 py-1 rounded-md bg-surface border border-border">
+                {r.value}px · {r.role}
               </span>
             ))}
+            {p.borderRadius.length === 0 && <span className="font-mono text-[10px] text-muted-foreground">none detected</span>}
           </div>
         </Section>
       </div>
 
-      <Section icon={Sparkles} label="Mood">
+      <Section icon={Layers} label={`Shadows · ${p.shadows.length}`}>
         <div className="flex flex-wrap gap-1.5">
-          {p.mood.map((t, i) => (
+          {p.shadows.slice(0, 4).map((s, i) => (
+            <span key={i} className="font-mono text-[10px] px-2 py-1 rounded-md bg-surface border border-border">
+              {s.level}
+            </span>
+          ))}
+          {p.shadows.length === 0 && <span className="font-mono text-[10px] text-muted-foreground">flat surfaces</span>}
+        </div>
+      </Section>
+
+      <Section icon={Sparkles} label="Mood & Tags">
+        <p className="text-sm text-muted-foreground mb-2">{p.mood}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {p.tags.map((t, i) => (
             <span
               key={`${t}-${i}`}
               className="font-mono text-[10px] px-2 py-1 rounded-md border"
@@ -169,16 +207,18 @@ export function ProfilePreview({
         </div>
       </Section>
 
-      <Section icon={Play} label="Motion">
-        <div className="h-12 rounded-lg bg-ink/40 border border-border relative overflow-hidden">
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 48" preserveAspectRatio="none">
-            <path d="M0,40 C40,40 60,8 100,8 C140,8 160,40 200,40" stroke="oklch(0.92 0.20 130)" strokeWidth="1.5" fill="none" />
-          </svg>
-          <span className="absolute bottom-1.5 right-2 font-mono text-[10px] text-muted-foreground truncate max-w-[60%]">
-            {p.motion.ease.replace("cubic-bezier", "cb")} · {p.motion.duration_ms}ms
-          </span>
-        </div>
-      </Section>
+      {p.cssCustomProperties.length > 0 && (
+        <Section icon={LayoutGrid} label={`CSS Custom Properties · ${p.cssCustomProperties.length}`}>
+          <div className="rounded-lg bg-ink/40 border border-border p-2 max-h-40 overflow-y-auto space-y-1 font-mono text-[10px]">
+            {p.cssCustomProperties.slice(0, 20).map((c, i) => (
+              <div key={i} className="flex gap-2 truncate">
+                <span className="text-lime shrink-0">{c.name}</span>
+                <span className="text-muted-foreground truncate">{c.value}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
     </div>
   );
 }
