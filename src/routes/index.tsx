@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Scan, FileJson, Wand2, Download,
-  ArrowRight, Lock, Zap, AlertTriangle, Copy,
+  ArrowRight, Lock, Zap, AlertTriangle, Copy, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -13,6 +13,7 @@ import { ProfilePreview } from "@/components/ProfilePreview";
 import { DnaHelix } from "@/components/DnaHelix";
 import { Icon3D, type Icon3DName } from "@/components/Icon3D";
 import { useAnalyze } from "@/lib/useAnalyze";
+import { profileToMarkdown } from "@/lib/analyzer/markdown";
 import { getAnonPeerId } from "@/lib/memory/peer";
 import { useEffect, useState, useMemo } from "react";
 
