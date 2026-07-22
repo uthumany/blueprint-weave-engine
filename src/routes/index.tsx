@@ -285,7 +285,15 @@ function Home() {
                 disabled={!profile}
                 className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border text-sm hover:border-lime/40 transition-colors disabled:opacity-40 disabled:hover:border-border"
               >
-                <Download className="size-4" /> Download .dna.json
+                <Download className="size-4" /> design.json
+              </button>
+              <button
+                type="button"
+                onClick={downloadMarkdown}
+                disabled={!profile}
+                className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border text-sm hover:border-lime/40 transition-colors disabled:opacity-40 disabled:hover:border-border"
+              >
+                <FileText className="size-4" /> DESIGN.md
               </button>
               <button
                 type="button"
@@ -299,8 +307,8 @@ function Home() {
 
             <div className="mt-10 grid grid-cols-2 gap-4 max-w-md">
               {[
-                { k: "dimensions", v: "07" },
-                { k: "tokens / profile", v: profile ? String(profile.palette.length + profile.spacing.scale.length + 8).padStart(2, "0") : "~84" },
+                { k: "dimensions", v: "10" },
+                { k: "tokens / profile", v: profile ? String(profile.colors.palette.length + profile.spacing.common.length + profile.cssCustomProperties.length).padStart(2, "0") : "~84" },
                 { k: "confidence", v: profile ? `${Math.round(profile.confidence * 100)}%` : "—" },
                 { k: "free tier", v: "∞" },
               ].map((s) => (
